@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+
+# build and test output
+dist/
+.angular/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# local env
+.env.local
+.env.*.local
+
+# local tool state
+.claude/settings.local.json
+.playwright-mcp/
+
+# editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# logs
+npm-debug.log*
