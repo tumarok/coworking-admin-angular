@@ -1,0 +1,31 @@
+@use 'theme';
+@use 'tokens';
+
+body {
+  margin: 0;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+}
+
+a {
+  color: var(--mat-sys-primary);
+}
+
+:focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+// Present for screen readers and the keyboard, invisible on screen.
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

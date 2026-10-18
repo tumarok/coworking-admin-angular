@@ -1,0 +1,43 @@
+// Status colours, one set per tone (see `status-tone.ts` for which status has which tone):
+//   -clr  the dot and other marks next to the text
+//   -bg   background of the chip
+//   -brd  its border
+//   -txt  its text
+//
+// Each token is `light-dark(<light scheme>, <dark scheme>)`; the scheme follows the system.
+// Contrast, WCAG 2.x, both measured against the chip's own `-bg` (the dot and the text sit on it):
+//   -txt  at least 6.8:1 in the light scheme and 8.3:1 in the dark one (AA asks 4.5:1 for text)
+//   -clr  at least 4.4:1 in both schemes (AA asks 3:1 for graphics)
+// `-brd` is decoration and is not measured. Recompute when a colour changes.
+:root {
+  --status-success-clr: light-dark(#2e7d32, #7fd08c);
+  --status-success-bg: light-dark(#e2f3e5, #173a1f);
+  --status-success-brd: light-dark(#b3dcba, #2f6a3b);
+  --status-success-txt: light-dark(#1b5e20, #a9e8b3);
+
+  --status-info-clr: light-dark(#1565c0, #8ab8f5);
+  --status-info-bg: light-dark(#e1eefb, #142f4e);
+  --status-info-brd: light-dark(#b0cff2, #2c5a8f);
+  --status-info-txt: light-dark(#0d47a1, #b3d1fa);
+
+  --status-warning-clr: light-dark(#a35c00, #f2c14e);
+  --status-warning-bg: light-dark(#fff0d1, #3a2e0c);
+  --status-warning-brd: light-dark(#efd08b, #6f5718);
+  --status-warning-txt: light-dark(#6b3d00, #fbdc8a);
+
+  --status-danger-clr: light-dark(#c62828, #f2918a);
+  --status-danger-bg: light-dark(#fde6e6, #4a1c1a);
+  --status-danger-brd: light-dark(#f2b8b8, #82342f);
+  --status-danger-txt: light-dark(#8a1c1c, #fbbab5);
+
+  // The inverse chip: dark on a light page, light on a dark one.
+  --status-contrast-clr: light-dark(#9ca3af, #4b5563);
+  --status-contrast-bg: light-dark(#1f2937, #e5e7eb);
+  --status-contrast-brd: light-dark(#111827, #f3f4f6);
+  --status-contrast-txt: light-dark(#f9fafb, #111827);
+
+  --status-neutral-clr: light-dark(#5f6368, #9aa0a6);
+  --status-neutral-bg: light-dark(#eceff1, #2c3034);
+  --status-neutral-brd: light-dark(#cdd5da, #4a5056);
+  --status-neutral-txt: light-dark(#3c4043, #c9cdd1);
+}

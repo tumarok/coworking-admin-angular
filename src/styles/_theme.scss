@@ -1,0 +1,29 @@
+@use '@angular/material' as mat;
+
+// System fonts: nothing to download, and each platform's own UI face looks native on it.
+$font-family: (system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
+
+// Material 3. `theme-type: color-scheme` emits every colour as `light-dark(<light>, <dark>)`, and
+// `color-scheme: light dark` lets the browser choose by the system preference, so one set of
+// tokens serves both schemes with no class to toggle and no second stylesheet.
+//
+// Only the system tokens (`--mat-sys-*`) live here. A component's own tokens are set where the
+// component is used, so the global stylesheet stays small.
+html {
+  color-scheme: light dark;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$violet-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        plain-family: $font-family,
+        brand-family: $font-family,
+      ),
+      density: 0,
+    )
+  );
+}

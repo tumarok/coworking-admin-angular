@@ -1,0 +1,76 @@
+:host {
+  display: block;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--mat-sys-corner-medium);
+  background: var(--mat-sys-surface);
+}
+
+.progress {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+// The table's own tokens are set here, on the one component that draws a table, not in the global
+// theme.
+table {
+  --mat-table-background-color: transparent;
+  --mat-table-header-container-height: 3rem;
+  --mat-table-row-item-container-height: 3.25rem;
+  --mat-table-header-headline-color: var(--mat-sys-on-surface-variant);
+  --mat-table-header-headline-size: 0.8125rem;
+  --mat-table-row-item-outline-color: var(--mat-sys-outline-variant);
+
+  width: 100%;
+  min-width: 40rem;
+}
+
+th {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.select {
+  width: 3.5rem;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+td a {
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.state {
+  padding: 2.5rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+.failure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--mat-sys-error);
+}

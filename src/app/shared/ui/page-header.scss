@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  font: var(--mat-sys-label-large);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+h1 {
+  margin: 0;
+  font: var(--mat-sys-headline-medium);
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

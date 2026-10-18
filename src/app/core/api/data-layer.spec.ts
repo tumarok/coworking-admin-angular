@@ -1,7 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { ON_UNAUTHORIZED } from '@core/http/session-hooks';
 import { SESSION_EXPIRED_MESSAGE } from '@core/http/error.interceptor';
 import {
@@ -37,11 +36,7 @@ describe('data layer against the mock API', () => {
   beforeEach(() => {
     onUnauthorized = vi.fn();
     TestBed.configureTestingModule({
-      providers: [
-        provideTestApi(),
-        { provide: ON_UNAUTHORIZED, useValue: onUnauthorized },
-        { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
-      ],
+      providers: [provideTestApi(), { provide: ON_UNAUTHORIZED, useValue: onUnauthorized }],
     });
   });
 
