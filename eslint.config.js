@@ -60,7 +60,9 @@ const policies = [
   },
   {
     from: { element: { type: 'testing' } },
-    allow: { to: { element: { types: { anyOf: ['testing', 'server', ...SHARED_LAYERS] } } } },
+    allow: {
+      to: { element: { types: { anyOf: ['testing', 'server', 'core', ...SHARED_LAYERS] } } },
+    },
   },
   {
     // Test helpers are for specs only: no other policy lets a layer reach `src/testing`.
