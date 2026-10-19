@@ -6,6 +6,9 @@ import {
   type BookingInput,
   bookingSchema,
   type BookingStatus,
+  type BulkBookingRequest,
+  type BulkBookingResult,
+  bulkBookingResultSchema,
 } from '@shared/api/contract';
 
 export interface UpdateBookingArg {
@@ -62,5 +65,20 @@ export function injectChangeBookingStatus(): MutationRef<ChangeBookingStatusArg,
     }),
     parse: parseResponse(bookingSchema, 'POST /bookings/:id/status'),
     invalidates: (_arg, changed) => savedTags('Booking', changed.id),
+  });
+}
+
+/**
+ * Confirms or cancels many bookings in one request; the answer says which were updated and which
+ * were refused, and why. Not silent: a request that fails as a whole (a lost connection, a 5xx) is
+ * a snackbar, while a booking that cannot make the move is a `failed` entry of a success. Only the
+ * bookings that changed make anything stale, so a request that updated none reloads nothing.
+ */
+export function injectBulkBookings(): MutationRef<BulkBookingRequest, BulkBookingResult> {
+  return createMutation({
+    request: (body) => ({ method: 'POST', url: '/bookings/bulk', body }),
+    parse: parseResponse(bulkBookingResultSchema, 'POST /bookings/bulk'),
+    invalidates: (_arg, { updated }) =>
+      updated.length > 0 ? savedTags('Booking', ...updated) : [],
   });
 }

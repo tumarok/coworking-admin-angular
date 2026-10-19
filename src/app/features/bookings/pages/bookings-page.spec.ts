@@ -1,15 +1,19 @@
 import { Location as BrowserLocation } from '@angular/common';
-import { Component } from '@angular/core';
+import { ApplicationRef, Component, type DebugElement } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { Router, RouterOutlet } from '@angular/router';
+import { TagRegistry } from '@core/api/tag-registry';
+import { listTag } from '@core/api/tags';
 import { formatMoney, formatTimeRange, humanize } from '@shared/util/format';
 import { render, screen, within } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { installMockApi, signIn } from '@testing/mock-api';
 import { apiUrl, server } from '@testing/msw-server';
 import { provideTestSession } from '@testing/test-providers';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { BOOKING_ROUTES } from '../bookings.routes';
+import { BookingsPage } from './bookings-page';
 
 @Component({ imports: [RouterOutlet], template: '<router-outlet />' })
 class Outlet {}
@@ -19,6 +23,7 @@ describe('BookingsPage', () => {
   // keeps that one-off cost out of the test that opens it, which would otherwise race the 5 s wait.
   beforeAll(async () => {
     await import('../dialogs/booking-form-dialog');
+    await import('../dialogs/bulk-result-dialog');
   });
 
   let api: ReturnType<typeof installMockApi>;
@@ -96,13 +101,13 @@ describe('BookingsPage', () => {
       await loaded(first20());
     });
 
-    it('lists the bookings with their details, in the columns of a booking', async () => {
+    it('lists the bookings with their details, after a column of checkboxes', async () => {
       await open();
       await loaded(first20());
 
       expect(
         screen.getAllByRole('columnheader').map((header) => header.textContent.trim()),
-      ).toEqual(['When', 'Room', 'Member', 'People', 'Price', 'Status']);
+      ).toEqual(['', 'When', 'Room', 'Member', 'People', 'Price', 'Status']);
       const booking = first20()[0];
       const row = screen.getAllByRole('row')[1];
       const when = formatTimeRange(booking.startsAt, booking.endsAt, locationOf(booking)?.timezone);
@@ -244,7 +249,7 @@ describe('BookingsPage', () => {
       await loaded(first20());
 
       const row = screen.getAllByRole('row')[1];
-      expect(within(row).getAllByRole('cell')[1]).toHaveTextContent('Deleted room');
+      expect(within(row).getAllByRole('cell')[2]).toHaveTextContent('Deleted room');
       expect(within(row).queryByRole('link', { name: /^Deleted room/ })).not.toBeInTheDocument();
       expect(within(row).getByRole('link', { name: /UTC$/ })).toBeInTheDocument();
     });
@@ -256,7 +261,7 @@ describe('BookingsPage', () => {
       await loaded(first20());
 
       const row = screen.getAllByRole('row')[1];
-      expect(within(row).getAllByRole('cell')[2]).toHaveTextContent('Deleted member');
+      expect(within(row).getAllByRole('cell')[3]).toHaveTextContent('Deleted member');
       expect(within(row).queryByRole('link', { name: 'Deleted member' })).not.toBeInTheDocument();
       expect(within(row).getByRole('link', { name: roomOf(booking)?.name })).toBeInTheDocument();
     });
@@ -761,6 +766,559 @@ describe('BookingsPage', () => {
         expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       });
       expect(router.url).toBe('/bookings');
+    });
+  });
+
+  describe('selecting bookings', () => {
+    const when = (b: Stored) => formatTimeRange(b.startsAt, b.endsAt, locationOf(b)?.timezone);
+    const labelOf = (b: Stored) => `${roomOf(b)?.name}, ${when(b)}`;
+    const rowOf = (b: Stored) => {
+      // The table sits behind a modal dialog in some of the checks, so hidden rows count.
+      const row = screen
+        .getAllByRole('row', { hidden: true })
+        .find((r) => within(r).queryByRole('link', { name: when(b), hidden: true }));
+      if (!row) throw new Error(`booking ${b.id} is not on screen`);
+      return row;
+    };
+    const tick = async (b: Stored) => {
+      await userEvent.click(
+        within(rowOf(b)).getByRole('checkbox', { name: `Select ${labelOf(b)}` }),
+      );
+    };
+    const selectedCount = () => screen.queryByText(/^\d+ selected$/);
+    const statusOf = (b: Stored) => within(rowOf(b)).getByText(humanize(b.status));
+    const snackbar = (text: string) => screen.findByText(text);
+    const searchBox = () => screen.getByRole('searchbox', { name: 'Search member or room' });
+    const bulkBodies = () => {
+      const bodies: unknown[] = [];
+      server.events.on('request:start', ({ request }) => {
+        if (request.method === 'POST' && new URL(request.url).pathname.endsWith('/bookings/bulk')) {
+          void request
+            .clone()
+            .json()
+            .then((body: unknown) => bodies.push(body));
+        }
+      });
+      return bodies;
+    };
+    /** Puts the first bookings of the list in the given statuses, before the page is opened. */
+    const arrange = (...statuses: Stored['status'][]) => {
+      const rows = first20();
+      statuses.forEach((status, i) => {
+        rows[i].status = status;
+      });
+      return rows.slice(0, statuses.length);
+    };
+
+    it('shows no bar while nothing is selected', async () => {
+      await open();
+      await loaded(first20());
+
+      expect(selectedCount()).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'Confirm selected bookings' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('names each checkbox by the room and the time', async () => {
+      await open();
+      await loaded(first20());
+      const booking = first20()[0];
+
+      expect(
+        within(rowOf(booking)).getByRole('checkbox', { name: `Select ${labelOf(booking)}` }),
+      ).not.toBeChecked();
+    });
+
+    it('shows the bar with the count and the two actions once a row is ticked, and hides it again', async () => {
+      await open();
+      await loaded(first20());
+      const [a, b] = first20();
+
+      await tick(a);
+
+      expect(selectedCount()).toHaveTextContent('1 selected');
+      expect(screen.getByRole('button', { name: 'Confirm selected bookings' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Cancel selected bookings' })).toBeEnabled();
+
+      await tick(b);
+      expect(selectedCount()).toHaveTextContent('2 selected');
+
+      await tick(a);
+      await tick(b);
+      expect(selectedCount()).not.toBeInTheDocument();
+    });
+
+    it('selects every row of the page from the header checkbox, and clears them from it', async () => {
+      await open();
+      await loaded(first20());
+      const all = screen.getByRole('checkbox', { name: 'Select all rows on this page' });
+
+      await userEvent.click(all);
+
+      expect(selectedCount()).toHaveTextContent('20 selected');
+      expect(all).toBeChecked();
+
+      await userEvent.click(all);
+
+      expect(selectedCount()).not.toBeInTheDocument();
+    });
+
+    describe('when the list changes', () => {
+      it('forgets the selection on a new filter', async () => {
+        await open();
+        await loaded(first20());
+        await tick(first20()[0]);
+
+        await pick('Status', 'Completed');
+
+        await loaded(bookingsWhere((b) => b.status === 'completed').slice(0, 20));
+        expect(selectedCount()).not.toBeInTheDocument();
+        expect(
+          screen.getAllByRole('checkbox').filter((c) => (c as HTMLInputElement).checked),
+        ).toEqual([]);
+      });
+
+      it('forgets the selection on a search', async () => {
+        await open();
+        await loaded(first20());
+        await tick(first20()[0]);
+
+        await search('a');
+
+        await vi.waitFor(() => {
+          expect(selectedCount()).not.toBeInTheDocument();
+        });
+      });
+
+      it('forgets the selection on a new page', async () => {
+        await open('/bookings?limit=10');
+        await loaded(bookingsWhere().slice(0, 10));
+        await userEvent.click(
+          screen.getByRole('checkbox', { name: 'Select all rows on this page' }),
+        );
+        expect(selectedCount()).toHaveTextContent('10 selected');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Next page' }));
+
+        await loaded(bookingsWhere().slice(10, 20));
+        expect(selectedCount()).not.toBeInTheDocument();
+        await userEvent.click(screen.getAllByRole('checkbox')[1]);
+        expect(selectedCount()).toHaveTextContent('1 selected');
+      });
+
+      it('forgets the selection on a new page size', async () => {
+        await open('/bookings?limit=10');
+        await loaded(bookingsWhere().slice(0, 10));
+        await tick(bookingsWhere()[0]);
+
+        await userEvent.click(screen.getByRole('combobox', { name: /items per page/i }));
+        await userEvent.click(await screen.findByRole('option', { name: '20' }));
+
+        await loaded(first20());
+        expect(selectedCount()).not.toBeInTheDocument();
+      });
+
+      it('lets go of a booking that a reload took off the list, and keeps the others', async () => {
+        await open();
+        await loaded(first20());
+        const [a, b] = first20();
+        await tick(a);
+        await tick(b);
+        api.db.bookings = api.db.bookings.filter((x) => x.id !== a.id);
+
+        TestBed.inject(TagRegistry).invalidate([listTag('Booking')]);
+
+        await vi.waitFor(() => {
+          expect(selectedCount()).toHaveTextContent('1 selected');
+        });
+        await loaded(first20());
+        expect(within(rowOf(b)).getByRole('checkbox')).toBeChecked();
+      });
+    });
+
+    describe('confirming', () => {
+      it('confirms the selected bookings in one request, says so, and shows their new status', async () => {
+        const [a, b, c] = arrange('pending', 'pending', 'pending');
+        await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+        await tick(a);
+        await tick(b);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        expect(await snackbar('2 bookings confirmed')).toBeInTheDocument();
+        await vi.waitFor(() => {
+          expect(statusOf(a)).toHaveTextContent('Confirmed');
+          expect(statusOf(b)).toHaveTextContent('Confirmed');
+        });
+        expect(statusOf(c)).toHaveTextContent('Pending');
+        expect(bodies).toEqual([{ ids: [a.id, b.id], action: 'confirm' }]);
+        expect(selectedCount()).not.toBeInTheDocument();
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+
+      it('says "1 booking" for one', async () => {
+        const [a] = arrange('pending');
+        await open();
+        await loaded(first20());
+        await tick(a);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        expect(await snackbar('1 booking confirmed')).toBeInTheDocument();
+      });
+
+      it('puts focus on the search box, not nowhere, when the bar goes', async () => {
+        const [a] = arrange('pending');
+        await open();
+        await loaded(first20());
+        await tick(a);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        await vi.waitFor(() => {
+          expect(selectedCount()).not.toBeInTheDocument();
+        });
+        expect(searchBox()).toHaveFocus();
+      });
+
+      it('disables both buttons and shows the progress while the request runs', async () => {
+        const [a] = arrange('pending');
+        server.use(
+          http.post(apiUrl('/bookings/bulk'), async () => {
+            await delay(150);
+            return HttpResponse.json({ updated: [a.id], failed: [] });
+          }),
+        );
+        await open();
+        await loaded(first20());
+        await tick(a);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        const confirm = screen.getByRole('button', { name: 'Confirm selected bookings' });
+        expect(confirm).toHaveAttribute('aria-busy', 'true');
+        expect(confirm).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByRole('button', { name: 'Cancel selected bookings' })).toHaveAttribute(
+          'aria-disabled',
+          'true',
+        );
+        await snackbar('1 booking confirmed');
+      });
+    });
+
+    describe('cancelling', () => {
+      it('asks first, then cancels the selected bookings in one request', async () => {
+        const [a, b] = arrange('pending', 'confirmed');
+        await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+        await tick(a);
+        await tick(b);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Cancel selected bookings' }));
+        expect(bodies).toEqual([]);
+        await userEvent.click(await screen.findByRole('button', { name: 'Cancel bookings' }));
+
+        expect(await snackbar('2 bookings cancelled')).toBeInTheDocument();
+        await vi.waitFor(() => {
+          expect(statusOf(a)).toHaveTextContent('Cancelled');
+          expect(statusOf(b)).toHaveTextContent('Cancelled');
+        });
+        expect(bodies).toEqual([{ ids: [a.id, b.id], action: 'cancel' }]);
+        expect(selectedCount()).not.toBeInTheDocument();
+      });
+
+      it('sends nothing and keeps the selection when the person keeps the bookings', async () => {
+        const [a] = arrange('pending');
+        await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+        await tick(a);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Cancel selected bookings' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Keep' }));
+
+        await vi.waitFor(() => {
+          expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        });
+        await TestBed.inject(ApplicationRef).whenStable();
+        expect(bodies).toEqual([]);
+        expect(selectedCount()).toHaveTextContent('1 selected');
+        expect(statusOf(a)).toHaveTextContent('Pending');
+      });
+    });
+
+    describe('when some bookings cannot make the move', () => {
+      it('confirms what it can and lists the others in a dialog, with a link and the reason', async () => {
+        const [ok, done] = arrange('pending', 'completed');
+        await open();
+        await loaded(first20());
+        await tick(ok);
+        await tick(done);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        expect(await snackbar('1 booking confirmed')).toBeInTheDocument();
+        const dialog = await screen.findByRole('dialog', {
+          name: 'Some bookings were not confirmed',
+        });
+        expect(within(dialog).getByRole('link', { name: labelOf(done) })).toHaveAttribute(
+          'href',
+          `/bookings/${done.id}`,
+        );
+        expect(dialog).toHaveTextContent('Cannot confirm a booking that is completed');
+        expect(within(dialog).getAllByRole('listitem')).toHaveLength(1);
+        expect(selectedCount()).not.toBeInTheDocument();
+        await vi.waitFor(() => {
+          expect(statusOf(ok)).toHaveTextContent('Confirmed');
+        });
+      });
+
+      it('refuses to cancel a completed booking, and says so without a success message', async () => {
+        const [done, ok] = arrange('completed', 'pending');
+        await open();
+        await loaded(first20());
+        await tick(done);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Cancel selected bookings' }));
+        await userEvent.click(await screen.findByRole('button', { name: 'Cancel bookings' }));
+
+        const dialog = await screen.findByRole('dialog', {
+          name: 'Some bookings were not cancelled',
+        });
+        expect(dialog).toHaveTextContent(labelOf(done));
+        expect(dialog).toHaveTextContent('Cannot cancel a booking that is completed');
+        expect(screen.queryByText(/^\d+ bookings? cancelled$/)).not.toBeInTheDocument();
+        expect(statusOf(done)).toHaveTextContent('Completed');
+        expect(statusOf(ok)).toHaveTextContent('Pending');
+      });
+
+      it('puts focus on its Close button, and back on the search box once it is closed', async () => {
+        const [done] = arrange('completed');
+        await open();
+        await loaded(first20());
+        await tick(done);
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+        const dialog = await screen.findByRole('dialog');
+        await vi.waitFor(() => {
+          expect(within(dialog).getByRole('button', { name: 'Close' })).toHaveFocus();
+        });
+
+        await userEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+
+        await vi.waitFor(() => {
+          expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        });
+        await vi.waitFor(() => {
+          expect(searchBox()).toHaveFocus();
+        });
+      });
+
+      it('goes to the booking when its link is followed, and closes the dialog', async () => {
+        const [done] = arrange('completed');
+        const { router } = await open();
+        await loaded(first20());
+        await tick(done);
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+        const dialog = await screen.findByRole('dialog');
+
+        await userEvent.click(within(dialog).getByRole('link', { name: labelOf(done) }));
+
+        await vi.waitFor(() => {
+          expect(router.url).toBe(`/bookings/${done.id}`);
+        });
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
+
+      it('names a booking the page does not know by its id', async () => {
+        const [a] = arrange('pending');
+        server.use(
+          http.post(apiUrl('/bookings/bulk'), () =>
+            HttpResponse.json({
+              updated: [],
+              failed: [{ id: 'bk_gone', reason: 'Booking not found' }],
+            }),
+          ),
+        );
+        await open();
+        await loaded(first20());
+        await tick(a);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        const dialog = await screen.findByRole('dialog');
+        expect(within(dialog).getByRole('link', { name: 'bk_gone' })).toHaveAttribute(
+          'href',
+          '/bookings/bk_gone',
+        );
+      });
+
+      it('words the bookings by what was on screen when the request went out', async () => {
+        const [a, b] = arrange('pending', 'completed');
+        await open();
+        await loaded(first20());
+        await tick(a);
+        await tick(b);
+        // The booking is taken off the list while the request is under way.
+        server.use(
+          http.post(apiUrl('/bookings/bulk'), () => {
+            api.db.bookings = api.db.bookings.filter((x) => x.id !== b.id);
+            return HttpResponse.json({
+              updated: [a.id],
+              failed: [{ id: b.id, reason: 'Booking not found' }],
+            });
+          }),
+        );
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        const dialog = await screen.findByRole('dialog');
+        expect(within(dialog).getByRole('link', { name: labelOf(b) })).toBeInTheDocument();
+      });
+    });
+
+    describe('when the action is asked for again or at a bad moment', () => {
+      /** A response held back until the test lets it go. */
+      const held = (answer: () => { updated: string[]; failed: never[] }) => {
+        let release: () => void = () => undefined;
+        const gate = new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        server.use(
+          http.post(apiUrl('/bookings/bulk'), async () => {
+            await gate;
+            return HttpResponse.json(answer());
+          }),
+        );
+        return release;
+      };
+      const pageOf = (fixture: { debugElement: DebugElement }) =>
+        fixture.debugElement.query(By.directive(BookingsPage)).componentInstance as {
+          runBulk(action: 'confirm' | 'cancel'): Promise<void>;
+        };
+
+      it('sends one request for a quick double click', async () => {
+        const [a, b] = arrange('pending', 'pending');
+        const release = held(() => ({ updated: [a.id, b.id], failed: [] }));
+        await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+        await tick(a);
+        await tick(b);
+
+        await userEvent.dblClick(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+        release();
+
+        expect(await snackbar('2 bookings confirmed')).toBeInTheDocument();
+        expect(bodies).toHaveLength(1);
+      });
+
+      it('sends one request when the action is reported again before the first is answered', async () => {
+        const [a] = arrange('pending');
+        const release = held(() => ({ updated: [a.id], failed: [] }));
+        const { fixture } = await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+        await tick(a);
+        const page = pageOf(fixture);
+
+        const first = page.runBulk('confirm');
+        await page.runBulk('confirm');
+        release();
+        await first;
+
+        expect(bodies).toHaveLength(1);
+      });
+
+      it('sends nothing when no booking is selected', async () => {
+        const { fixture } = await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+
+        await pageOf(fixture).runBulk('cancel');
+        await fixture.whenStable();
+
+        expect(bodies).toEqual([]);
+      });
+
+      it('sends nothing when the list changed while the cancellation was being asked', async () => {
+        const [a] = arrange('pending');
+        await open();
+        await loaded(first20());
+        const bodies = bulkBodies();
+        await tick(a);
+        await userEvent.click(screen.getByRole('button', { name: 'Cancel selected bookings' }));
+        const confirm = await screen.findByRole('button', { name: 'Cancel bookings' });
+
+        await TestBed.inject(Router).navigateByUrl('/bookings?status=completed');
+        await vi.waitFor(() => {
+          expect(selectedCount()).not.toBeInTheDocument();
+        });
+        await userEvent.click(confirm);
+
+        await vi.waitFor(() => {
+          expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        });
+        await TestBed.inject(ApplicationRef).whenStable();
+        expect(bodies).toEqual([]);
+      });
+
+      it('tells the result but leaves the selection and focus of another list alone when the list changed meanwhile', async () => {
+        const [a] = arrange('pending');
+        const release = held(() => ({ updated: [a.id], failed: [] }));
+        await open();
+        await loaded(first20());
+        await tick(a);
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+        await pick('Status', 'Completed');
+        const completed = bookingsWhere((b) => b.status === 'completed');
+        await loaded(completed.slice(0, 20));
+        await tick(completed[0]);
+        expect(selectedCount()).toHaveTextContent('1 selected');
+
+        release();
+
+        expect(await snackbar('1 booking confirmed')).toBeInTheDocument();
+        await TestBed.inject(ApplicationRef).whenStable();
+        expect(selectedCount()).toHaveTextContent('1 selected');
+        expect(within(rowOf(completed[0])).getByRole('checkbox')).toBeChecked();
+        expect(searchBox()).not.toHaveFocus();
+      });
+    });
+
+    describe('when the request fails', () => {
+      it('says so in a snackbar, keeps the selection and lets the person try again', async () => {
+        const [a, b] = arrange('pending', 'pending');
+        server.use(
+          http.post(
+            apiUrl('/bookings/bulk'),
+            () => HttpResponse.json({ message: 'Boom' }, { status: 500 }),
+            { once: true },
+          ),
+        );
+        await open();
+        await loaded(first20());
+        await tick(a);
+        await tick(b);
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        expect(await snackbar('Boom')).toBeInTheDocument();
+        expect(selectedCount()).toHaveTextContent('2 selected');
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Confirm selected bookings' }),
+        ).not.toHaveAttribute('aria-busy');
+        expect(screen.getByRole('button', { name: 'Confirm selected bookings' })).toBeEnabled();
+        expect(statusOf(a)).toHaveTextContent('Pending');
+
+        await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+        expect(await snackbar('2 bookings confirmed')).toBeInTheDocument();
+      });
     });
   });
 });

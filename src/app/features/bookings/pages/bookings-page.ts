@@ -1,8 +1,25 @@
-import { ChangeDetectionStrategy, Component, computed, inject, viewChild } from '@angular/core';
+import { SelectionModel } from '@angular/cdk/collections';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+  viewChild,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButton } from '@angular/material/button';
 import { MatChip, MatChipRemove, MatChipSet } from '@angular/material/chips';
 import { Router, RouterLink } from '@angular/router';
-import { type Booking, memberFullName } from '@shared/api/contract';
+import { Notifier } from '@core/notifications/notifier';
+import {
+  type Booking,
+  type BulkBookingAction,
+  type BulkBookingResult,
+  memberFullName,
+} from '@shared/api/contract';
 import { DateField } from '@shared/forms/date-field';
 import { AppIcon } from '@shared/ui/app-icon';
 import { DataTable, type DataTableColumn } from '@shared/ui/data-table';
@@ -14,7 +31,9 @@ import { SearchInput } from '@shared/ui/search-input';
 import { withCurrentOption } from '@shared/ui/select-option';
 import { StatusChip } from '@shared/ui/status-chip';
 import { formatMoney } from '@shared/util/format';
+import { map } from 'rxjs';
 import {
+  bookingLabel,
   DELETED_MEMBER,
   DELETED_ROOM,
   hasLocation,
@@ -23,13 +42,16 @@ import {
   timeSpan,
   UNKNOWN_LOCATION,
 } from '../booking-display';
-import { STATUS_OPTIONS } from '../booking-options';
+import { BULK_DONE, countBookings, STATUS_OPTIONS } from '../booking-options';
+import { injectBulkBookings } from '../data/booking-mutations';
 import { injectBookingsQuery } from '../data/booking-queries';
 import { injectLocationsQuery } from '../data/location-queries';
 import { injectMemberById } from '../data/member-lookups';
 import { injectRoomById } from '../data/room-lookups';
 import { injectBookingFormDialog } from '../dialogs/open-booking-form';
+import { injectBulkResultDialog } from '../dialogs/open-bulk-result';
 import { BookingListStore } from '../store/booking-list-store';
+import { BulkActionsBar } from './bulk-actions-bar';
 
 /** A room or a member the list is narrowed to by a link, shown so that it can be taken off. */
 interface LookupChip {
@@ -51,11 +73,18 @@ const UNKNOWN_MEMBER = 'Unknown member';
  *
  * Each booking reads on the clock of its own location, which the locations' time zones tell; the
  * rows wait for them, so no time is first drawn in one zone and then in another.
+ *
+ * The rows can be ticked, and the bar above the table then confirms or cancels them in one request.
+ * The selection belongs to the page and is of the rows on screen: it is cleared when the list
+ * changes (a filter, a search, a page), loses a row that a reload took away, and is cleared once
+ * the action has gone through. When some bookings could not make the move, a dialog says which, and
+ * why; a request that fails as a whole keeps the selection for another try.
  */
 @Component({
   selector: 'app-bookings-page',
   imports: [
     AppIcon,
+    BulkActionsBar,
     DataTable,
     DataTableCell,
     DateField,
@@ -79,9 +108,12 @@ export class BookingsPage {
   protected readonly store = inject(BookingListStore);
   private readonly router = inject(Router);
   private readonly openForm = injectBookingFormDialog();
+  private readonly openBulkResult = injectBulkResultDialog();
+  private readonly notifier = inject(Notifier);
   private readonly toolbar = viewChild.required(ListToolbar);
 
   protected readonly bookings = injectBookingsQuery(() => this.store.params());
+  private readonly bulk = injectBulkBookings();
   private readonly locations = injectLocationsQuery();
   private readonly member = injectMemberById(() => this.store.params().memberId);
   private readonly room = injectRoomById(() => this.store.params().roomId);
@@ -138,6 +170,20 @@ export class BookingsPage {
     return chips;
   });
 
+  protected readonly selection = new SelectionModel<Booking>(
+    true,
+    [],
+    true,
+    (a, b) => a.id === b.id,
+  );
+  protected readonly selectedCount = toSignal(
+    this.selection.changed.pipe(map(() => this.selection.selected.length)),
+    { initialValue: 0 },
+  );
+  /** The action whose request is under way. */
+  protected readonly bulkRunning = signal<BulkBookingAction | undefined>(undefined);
+  protected readonly rowLabel = (b: Booking) => bookingLabel(b, this.timeZones().get(b.locationId));
+
   protected readonly columns: readonly DataTableColumn<Booking>[] = [
     {
       key: 'when',
@@ -161,6 +207,27 @@ export class BookingsPage {
   protected readonly hasRoom = hasRoom;
   protected readonly hasLocation = hasLocation;
   protected readonly deletedRoom = DELETED_ROOM;
+
+  constructor() {
+    // Another list is another selection: nothing ticked on the last page, filter or search stays.
+    effect(() => {
+      this.store.params();
+      untracked(() => {
+        this.selection.clear();
+      });
+    });
+    // A reload of the same list can take a booking away (another user cancelled and filtered it
+    // out, deleted it); a row that is not on screen must not be acted on.
+    effect(() => {
+      const rows = this.rows();
+      if (!rows) return;
+      untracked(() => {
+        const present = new Set(rows.map((r) => r.id));
+        const gone = this.selection.selected.filter((b) => !present.has(b.id));
+        if (gone.length > 0) this.selection.deselect(...gone);
+      });
+    });
+  }
 
   /** Setting a day that contradicts the other end (from after to) takes the other end off. */
   protected setFrom(from: string): void {
@@ -188,5 +255,49 @@ export class BookingsPage {
   protected async create(): Promise<void> {
     const created = await this.openForm();
     if (created) await this.router.navigate(['/bookings', created.id]);
+  }
+
+  /**
+   * Sends the action for the selected bookings. What names each booking is read first: after the
+   * answer the list reloads, and a booking may no longer be on it. The selection goes (and focus
+   * to the first control of the toolbar, so it is not lost with the bar) once the request has been
+   * answered, unless the list changed meanwhile (then the selection is already another's); a
+   * request that fails keeps it, and the error interceptor has told the person why.
+   */
+  protected async runBulk(action: BulkBookingAction): Promise<void> {
+    // The bar's buttons are disabled only after it has rendered, so a quick second click gets here.
+    if (this.bulkRunning() || this.selection.isEmpty()) return;
+    const selected = this.selection.selected;
+    const listAtSend = this.store.params();
+    const labels = new Map(selected.map((b) => [b.id, this.rowLabel(b)]));
+
+    this.bulkRunning.set(action);
+    let result: BulkBookingResult;
+    try {
+      result = await this.bulk.run({ ids: selected.map((b) => b.id), action });
+    } catch {
+      return;
+    } finally {
+      this.bulkRunning.set(undefined);
+    }
+
+    // Another list, with its own selection and its own focus, may be on screen by now: leave it be.
+    if (this.store.params() === listAtSend) {
+      this.selection.deselect(...selected);
+      this.toolbar().focusFirst();
+    }
+    if (result.updated.length > 0) {
+      void this.notifier.success(`${countBookings(result.updated.length)} ${BULK_DONE[action]}`);
+    }
+    if (result.failed.length > 0) {
+      await this.openBulkResult({
+        action,
+        failures: result.failed.map(({ id, reason }) => ({
+          id,
+          label: labels.get(id) ?? id,
+          reason,
+        })),
+      });
+    }
   }
 }

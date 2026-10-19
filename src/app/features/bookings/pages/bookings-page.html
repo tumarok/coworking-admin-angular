@@ -64,6 +64,17 @@
   }
 </app-list-toolbar>
 
+@if (rows()?.length) {
+  <!-- The slot keeps its height, so the rows do not move when the first one is ticked. -->
+  <div class="bulk-slot">
+    <app-bulk-actions-bar
+      [count]="selectedCount()"
+      [running]="bulkRunning()"
+      (run)="runBulk($event)"
+    />
+  </div>
+}
+
 <app-data-table
   caption="Bookings"
   [columns]="columns"
@@ -74,6 +85,8 @@
   [fetching]="bookings.isFetching()"
   [error]="bookings.error()?.message"
   [emptyMessage]="emptyMessage()"
+  [selection]="selection"
+  [rowLabel]="rowLabel"
   (pageChange)="store.paginate($event)"
   (retry)="bookings.refresh()"
 >

@@ -13,6 +13,11 @@ import { routes } from './app.routes';
 describe('the bookings section of the app', () => {
   let api: ReturnType<typeof installMockApi>;
 
+  // The list's result dialog is a lazy chunk; fetching it here keeps that cost out of the test.
+  beforeAll(async () => {
+    await import('./features/bookings/dialogs/bulk-result-dialog');
+  });
+
   beforeEach(() => {
     api = installMockApi();
   });
@@ -122,5 +127,47 @@ describe('the bookings section of the app', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Page not found' }),
     ).toBeInTheDocument();
+  });
+
+  it('confirms selected bookings in one request from the list, and tells which could not be', async () => {
+    signIn();
+    const [pending, done] = [...api.db.bookings].sort((a, b) =>
+      b.startsAt.localeCompare(a.startsAt),
+    );
+    pending.status = 'pending';
+    done.status = 'completed';
+    const label = (id: string) => {
+      const booking = api.db.bookings.find((b) => b.id === id);
+      const room = api.db.rooms.find((r) => r.id === booking?.roomId);
+      const location = api.db.locations.find((l) => l.id === room?.locationId);
+      const range = formatTimeRange(
+        booking?.startsAt ?? '',
+        booking?.endsAt ?? '',
+        location?.timezone,
+      );
+      return `${room?.name}, ${range}`;
+    };
+    const { router } = await open('/bookings');
+
+    await userEvent.click(
+      await screen.findByRole('checkbox', { name: `Select ${label(pending.id)}` }),
+    );
+    await userEvent.click(screen.getByRole('checkbox', { name: `Select ${label(done.id)}` }));
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm selected bookings' }));
+
+    expect(await screen.findByText('1 booking confirmed')).toBeInTheDocument();
+    const dialog = await screen.findByRole('dialog', { name: 'Some bookings were not confirmed' });
+    expect(dialog).toHaveTextContent('Cannot confirm a booking that is completed');
+    expect(pending.status).toBe('confirmed');
+    expect(screen.queryByText(/\d+ selected/)).not.toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole('link', { name: label(done.id) }));
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: label(done.id) }),
+    ).toBeInTheDocument();
+    expect(router.url).toBe(`/bookings/${done.id}`);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

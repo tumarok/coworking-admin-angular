@@ -42,3 +42,10 @@ export function timeSpan(booking: Pick<Booking, 'startsAt' | 'endsAt'>, timeZone
   const range = formatTimeRange(booking.startsAt, booking.endsAt, timeZone ?? FALLBACK_TIME_ZONE);
   return timeZone ? range : `${range} ${FALLBACK_TIME_ZONE}`;
 }
+
+/** What names a booking where there is no heading for it: `Room name, 01 Jul 2026, 09:00–11:30`. */
+export const bookingLabel = (
+  booking: Pick<Booking, 'roomName' | 'startsAt' | 'endsAt'>,
+  timeZone?: string,
+): string =>
+  `${hasRoom(booking) ? booking.roomName : DELETED_ROOM}, ${timeSpan(booking, timeZone)}`;

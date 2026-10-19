@@ -9,6 +9,7 @@ import { type BackLink, PageHeader } from '@shared/ui/page-header';
 import { StatusChip } from '@shared/ui/status-chip';
 import { durationHours, formatDateTime, formatMoney } from '@shared/util/format';
 import {
+  bookingLabel,
   DELETED_MEMBER,
   DELETED_ROOM,
   FALLBACK_TIME_ZONE,
@@ -16,7 +17,6 @@ import {
   hasMember,
   hasRoom,
   missingLocation,
-  timeSpan,
 } from '../booking-display';
 import { injectBookingQuery } from '../data/booking-queries';
 import { injectLocationById } from '../data/location-queries';
@@ -116,7 +116,7 @@ export class BookingDetailsPage {
   ];
 
   protected title(booking: Booking): string {
-    return `${hasRoom(booking) ? booking.roomName : DELETED_ROOM}, ${timeSpan(booking, this.timeZone())}`;
+    return bookingLabel(booking, this.timeZone());
   }
 
   /** Only a booking that has not started its course can be changed. */

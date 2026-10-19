@@ -1,4 +1,4 @@
-import { BOOKING_STATUSES, type BookingStatus } from '@shared/api/contract';
+import { BOOKING_STATUSES, type BookingStatus, type BulkBookingAction } from '@shared/api/contract';
 import type { ConfirmOptions } from '@shared/ui/confirm-dialog-content';
 import type { SelectOption } from '@shared/ui/select-option';
 import { humanize } from '@shared/util/format';
@@ -48,3 +48,21 @@ export const STATUS_ACTIONS: Readonly<Partial<Record<BookingStatus, StatusAction
 /** What the snackbar says once a booking has moved: `Booking checked in`. */
 export const statusChanged = (status: BookingStatus): string =>
   `Booking ${status.replaceAll('_', ' ')}`;
+
+/** `1 booking`, `2 bookings`. */
+export const countBookings = (count: number): string =>
+  `${count} ${count === 1 ? 'booking' : 'bookings'}`;
+
+/** The past tense of each bulk action, for what was done and what was not. */
+export const BULK_DONE: Readonly<Record<BulkBookingAction, string>> = {
+  confirm: 'confirmed',
+  cancel: 'cancelled',
+};
+
+/** Asked before cancelling the selected bookings; confirming them asks nothing. */
+export const bulkCancelConfirmation = (count: number): ConfirmOptions => ({
+  title: `Cancel ${countBookings(count)}?`,
+  confirmLabel: 'Cancel bookings',
+  cancelLabel: 'Keep',
+  danger: true,
+});

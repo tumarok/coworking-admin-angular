@@ -4,10 +4,12 @@ import { TestBed } from '@angular/core/testing';
 import { createQuery } from '@core/api/create-query';
 import { listTag } from '@core/api/tags';
 import { bookableSlot, findBookedSlot, installMockApi, signIn } from '@testing/mock-api';
-import { server } from '@testing/msw-server';
+import { apiUrl, server } from '@testing/msw-server';
+import { http, HttpResponse } from 'msw';
 import { provideTestApi } from '@testing/test-providers';
 import { injectBookingQuery, injectBookingsQuery } from './booking-queries';
 import {
+  injectBulkBookings,
   injectChangeBookingStatus,
   injectCreateBooking,
   injectUpdateBooking,
@@ -300,6 +302,104 @@ describe('booking mutations', () => {
       await vi.waitFor(() => {
         expect(snackbars()).toHaveLength(1);
       });
+    });
+  });
+
+  describe('injectBulkBookings', () => {
+    const withStatus = (status: string, skip = 0) => {
+      const booking = api.db.bookings.filter((b) => b.status === status).at(skip);
+      if (!booking) throw new Error(`seed has no ${status} booking`);
+      return booking;
+    };
+
+    it('posts the ids and the action, and resolves with what was updated and what failed', async () => {
+      const [a, b] = [withStatus('pending'), withStatus('pending', 1)];
+      const done = withStatus('completed');
+      const bulk = inject(injectBulkBookings);
+
+      const result = await bulk.run({ ids: [a.id, done.id, b.id], action: 'confirm' });
+
+      expect(result.updated).toEqual([a.id, b.id]);
+      expect(result.failed).toEqual([
+        { id: done.id, reason: 'Cannot confirm a booking that is completed' },
+      ]);
+      expect(api.db.bookings.find((x) => x.id === a.id)?.status).toBe('confirmed');
+      expect(done.status).toBe('completed');
+      expect(requests).toEqual(['POST /bookings/bulk']);
+    });
+
+    it('reloads the bookings, the lists and the dashboard, but not another booking', async () => {
+      const id = pendingBooking().id;
+      const { detail, list, other, dashboard, rooms, members } = await mountQueries(id);
+      const bulk = inject(injectBulkBookings);
+
+      await bulk.run({ ids: [id], action: 'cancel' });
+
+      await eventually(() => {
+        expect(detail.value()?.status).toBe('cancelled');
+      });
+      expect(countOf(`GET /bookings/${id}`)).toBe(1);
+      expect(countOf('GET /bookings')).toBe(1);
+      expect(countOf('GET /dashboard')).toBe(1);
+      expect(countOf(`GET /bookings/${other.value()?.id}`)).toBe(0);
+      expect(countOf('GET /rooms')).toBe(0);
+      expect(countOf('GET /members')).toBe(0);
+      expect(list.value()).toBeDefined();
+      expect(dashboard.value()).toBeDefined();
+      expect(rooms.value()).toBeDefined();
+      expect(members.value()).toBeDefined();
+    });
+
+    it('reloads nothing when every booking was refused', async () => {
+      const done = withStatus('completed');
+      await mountQueries();
+      const bulk = inject(injectBulkBookings);
+
+      const result = await bulk.run({ ids: [done.id], action: 'cancel' });
+      TestBed.tick();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(result.updated).toEqual([]);
+      expect(result.failed).toHaveLength(1);
+      expect(requests).toEqual(['POST /bookings/bulk']);
+    });
+
+    it('is not silent: a request the API refuses as a whole is a snackbar, and nothing reloads', async () => {
+      await mountQueries();
+      const bulk = inject(injectBulkBookings);
+
+      await expect(bulk.run({ ids: [], action: 'confirm' })).rejects.toMatchObject({
+        status: 422,
+      });
+
+      await vi.waitFor(() => {
+        expect(snackbars()).toHaveLength(1);
+      });
+      expect(bulk.error()?.status).toBe(422);
+      TestBed.tick();
+      await TestBed.inject(ApplicationRef).whenStable();
+      expect(requests).toEqual(['POST /bookings/bulk']);
+    });
+
+    it('is not silent when the connection drops either', async () => {
+      server.use(http.post(apiUrl('/bookings/bulk'), () => HttpResponse.error()));
+      const bulk = inject(injectBulkBookings);
+
+      await expect(bulk.run({ ids: ['bk_1'], action: 'confirm' })).rejects.toBeDefined();
+
+      await vi.waitFor(() => {
+        expect(snackbars()).toHaveLength(1);
+      });
+    });
+
+    it('is pending while the request runs', async () => {
+      const bulk = inject(injectBulkBookings);
+
+      const running = bulk.run({ ids: [pendingBooking().id], action: 'confirm' });
+      expect(bulk.isPending()).toBe(true);
+      await running;
+
+      expect(bulk.isPending()).toBe(false);
     });
   });
 });

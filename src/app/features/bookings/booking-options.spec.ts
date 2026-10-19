@@ -1,5 +1,12 @@
 import { BOOKING_STATUSES, BOOKING_TRANSITIONS } from '@shared/api/contract';
-import { STATUS_ACTIONS, STATUS_OPTIONS, statusChanged } from './booking-options';
+import {
+  BULK_DONE,
+  bulkCancelConfirmation,
+  countBookings,
+  STATUS_ACTIONS,
+  STATUS_OPTIONS,
+  statusChanged,
+} from './booking-options';
 
 describe('STATUS_OPTIONS', () => {
   it('offers every status, worded for people', () => {
@@ -57,5 +64,33 @@ describe('statusChanged', () => {
     ['cancelled', 'Booking cancelled'],
   ] as const)('tells %s as "%s"', (status, text) => {
     expect(statusChanged(status)).toBe(text);
+  });
+});
+
+describe('countBookings', () => {
+  it.each([
+    [1, '1 booking'],
+    [2, '2 bookings'],
+    [100, '100 bookings'],
+  ])('counts %i as "%s"', (count, text) => {
+    expect(countBookings(count)).toBe(text);
+  });
+});
+
+describe('BULK_DONE', () => {
+  it('has the past tense of both actions', () => {
+    expect(BULK_DONE).toEqual({ confirm: 'confirmed', cancel: 'cancelled' });
+  });
+});
+
+describe('bulkCancelConfirmation', () => {
+  it('asks about the bookings by number, in the singular for one, as a danger', () => {
+    expect(bulkCancelConfirmation(1)).toEqual({
+      title: 'Cancel 1 booking?',
+      confirmLabel: 'Cancel bookings',
+      cancelLabel: 'Keep',
+      danger: true,
+    });
+    expect(bulkCancelConfirmation(3).title).toBe('Cancel 3 bookings?');
   });
 });

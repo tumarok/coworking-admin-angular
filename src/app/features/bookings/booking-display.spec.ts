@@ -1,5 +1,12 @@
 import type { Booking } from '@shared/api/contract';
-import { hasLocation, hasMember, hasRoom, missingLocation, timeSpan } from './booking-display';
+import {
+  bookingLabel,
+  hasLocation,
+  hasMember,
+  hasRoom,
+  missingLocation,
+  timeSpan,
+} from './booking-display';
 
 const BOOKING: Pick<
   Booking,
@@ -47,5 +54,17 @@ describe('timeSpan', () => {
 
   it('reads it in UTC, and says so, when the zone is not known', () => {
     expect(timeSpan(BOOKING)).toBe('01 Jul 2026, 06:00–08:30 UTC');
+  });
+});
+
+describe('bookingLabel', () => {
+  it('names the booking by its room and its span on the zone’s clock', () => {
+    expect(bookingLabel(BOOKING, 'Europe/Kyiv')).toBe('Aurora, 01 Jul 2026, 09:00–11:30');
+  });
+
+  it('says the room is deleted when the API has no name for it, and reads UTC without a zone', () => {
+    expect(bookingLabel({ ...BOOKING, roomName: '—' })).toBe(
+      'Deleted room, 01 Jul 2026, 06:00–08:30 UTC',
+    );
   });
 });
