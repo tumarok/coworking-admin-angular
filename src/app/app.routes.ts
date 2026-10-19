@@ -1,8 +1,17 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from '@core/auth/auth-guards';
 
 export const routes: Routes = [
   {
+    // Outside the shell: a visitor who is not signed in has no navigation to show.
+    path: 'login',
+    title: 'Sign in',
+    canActivate: [guestGuard],
+    loadComponent: () => import('@features/auth/login-page').then((m) => m.LoginPage),
+  },
+  {
     path: '',
+    canActivate: [authGuard],
     loadComponent: () => import('@core/layout/shell').then((m) => m.Shell),
     children: [
       {

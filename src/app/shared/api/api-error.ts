@@ -30,7 +30,9 @@ export function parseApiError(failure: unknown): ApiError {
   }
 
   const { status } = failure;
-  const body = readBody(failure.error);
+  // Status 0 means no answer arrived, so `error` holds the failure itself (a `TypeError` whose
+  // message is the browser's "Failed to fetch"), not a body to read a message from.
+  const body = status === 0 ? undefined : readBody(failure.error);
   const message = isRecord(body) && typeof body['message'] === 'string' ? body['message'] : '';
   return {
     status,

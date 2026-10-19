@@ -18,6 +18,7 @@ import { AppIcon } from '@shared/ui/app-icon';
 import { filter, map } from 'rxjs';
 import { APP_NAME } from './app-name';
 import { NAV_ITEMS } from './nav-items';
+import { UserMenu } from './user-menu';
 
 /** Below this width the navigation becomes a drawer that opens over the page. */
 const NARROW = '(max-width: 959.98px)';
@@ -42,6 +43,7 @@ const NARROW = '(max-width: 959.98px)';
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    UserMenu,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { '[class.narrow]': 'narrow()' },

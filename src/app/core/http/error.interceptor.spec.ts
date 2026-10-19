@@ -10,7 +10,7 @@ import { TestBed } from '@angular/core/testing';
 import { throwError } from 'rxjs';
 import { Notifier } from '@core/notifications/notifier';
 import { NETWORK_ERROR_MESSAGE } from '@shared/api/api-error';
-import { errorInterceptor, SESSION_EXPIRED_MESSAGE } from './error.interceptor';
+import { errorInterceptor } from './error.interceptor';
 import { SILENT } from './silent';
 
 describe('errorInterceptor', () => {
@@ -59,10 +59,11 @@ describe('errorInterceptor', () => {
     expect(notifier.error).toHaveBeenCalledWith(NETWORK_ERROR_MESSAGE);
   });
 
-  it('says that the session has expired on a 401', () => {
-    fail('/api/v1/rooms', 401, { message: 'Authentication required' });
+  it('leaves a 401 to the session, which decides whether to say that it has expired', () => {
+    const caught = fail('/api/v1/rooms', 401, { message: 'Authentication required' });
 
-    expect(notifier.error).toHaveBeenCalledWith(SESSION_EXPIRED_MESSAGE);
+    expect(notifier.error).not.toHaveBeenCalled();
+    expect((caught as HttpErrorResponse).status).toBe(401);
   });
 
   it('shows the server’s reason for a rejected sign-in', () => {

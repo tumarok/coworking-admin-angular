@@ -1,0 +1,75 @@
+<main>
+  <section class="card" aria-labelledby="title">
+    <app-icon class="logo" name="domain" size="2.5rem" />
+    <h1 id="title">Sign in</h1>
+    <p class="lead">to {{ appName }}</p>
+
+    <form
+      [formRoot]="loginForm"
+      [attr.aria-busy]="loginForm().submitting()"
+      (keydown.enter)="revealErrors($event)"
+    >
+      @if (failure(); as message) {
+        <div class="failure" role="alert">{{ message }}</div>
+      }
+
+      <app-form-field
+        #email
+        label="Email"
+        required
+        [errors]="loginForm.email().touched() ? loginForm.email().errors() : []"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            #emailInput
+            matInput
+            type="email"
+            autocomplete="username"
+            [id]="email.inputId"
+            [aria-describedby]="email.describedBy()"
+            [formField]="loginForm.email"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field
+        #password
+        label="Password"
+        required
+        [errors]="loginForm.password().touched() ? loginForm.password().errors() : []"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            #passwordInput
+            matInput
+            autocomplete="current-password"
+            [type]="passwordShown() ? 'text' : 'password'"
+            [id]="password.inputId"
+            [aria-describedby]="password.describedBy()"
+            [formField]="loginForm.password"
+          />
+          <button
+            matSuffix
+            mat-icon-button
+            type="button"
+            aria-label="Show password"
+            [attr.aria-pressed]="passwordShown()"
+            (click)="passwordShown.set(!passwordShown())"
+          >
+            <app-icon [name]="passwordShown() ? 'visibility_off' : 'visibility'" />
+          </button>
+        </mat-form-field>
+      </app-form-field>
+
+      <button
+        mat-flat-button
+        type="submit"
+        [disabled]="loginForm().invalid() || loginForm().submitting()"
+      >
+        {{ loginForm().submitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+    </form>
+
+    <p class="demo">Demo account: admin&#64;coworking.test / demo1234</p>
+  </section>
+</main>

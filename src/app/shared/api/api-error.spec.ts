@@ -95,6 +95,12 @@ describe('parseApiError', () => {
     expect(error.message).toBe(NETWORK_ERROR_MESSAGE);
   });
 
+  it('does not take the text of the failure itself for the answer of a server', () => {
+    const error = parseApiError(failure(0, new TypeError('Failed to fetch')));
+
+    expect(error.message).toBe(NETWORK_ERROR_MESSAGE);
+  });
+
   it.each([
     ['an error that is not an HTTP failure', new Error('boom')],
     ['a value that is not an error', 'boom'],

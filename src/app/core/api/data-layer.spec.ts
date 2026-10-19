@@ -2,7 +2,6 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ON_UNAUTHORIZED } from '@core/http/session-hooks';
-import { SESSION_EXPIRED_MESSAGE } from '@core/http/error.interceptor';
 import {
   type Booking,
   type Location,
@@ -81,7 +80,7 @@ describe('data layer against the mock API', () => {
     expect(page.error()).toBeUndefined();
   });
 
-  it('reports a missing session once to the hook and the snackbar, and fails the query', async () => {
+  it('reports a missing session once to the hook, with no snackbar of its own, and fails the query', async () => {
     installMockApi();
 
     const page = locations();
@@ -89,11 +88,8 @@ describe('data layer against the mock API', () => {
     await eventually(() => {
       expect(page.error()?.status).toBe(401);
     });
-    expect(onUnauthorized).toHaveBeenCalledTimes(1);
-    await eventually(() => {
-      expect(snackbars()).toHaveLength(1);
-    });
-    expect(snackbars()[0]).toHaveTextContent(SESSION_EXPIRED_MESSAGE);
+    expect(onUnauthorized).toHaveBeenCalledExactlyOnceWith(null);
+    expect(snackbars()).toHaveLength(0);
   });
 
   it('shows a new location in the list that is already on screen', async () => {

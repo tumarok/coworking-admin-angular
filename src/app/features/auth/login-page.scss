@@ -1,0 +1,70 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+main {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  min-height: 100dvh;
+  padding: 1rem;
+  background: linear-gradient(
+    135deg,
+    var(--mat-sys-primary-container),
+    var(--mat-sys-tertiary-container)
+  );
+}
+
+.card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 24rem;
+  padding: 2rem;
+  border-radius: var(--mat-sys-corner-extra-large);
+  background: var(--mat-sys-surface);
+  box-shadow: var(--mat-sys-level3);
+}
+
+.logo {
+  color: var(--mat-sys-primary);
+}
+
+h1 {
+  margin: 0.5rem 0 0;
+  font: var(--mat-sys-headline-small);
+}
+
+.lead {
+  margin: 0 0 1.5rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.failure {
+  padding: 0.75rem 1rem;
+  border-radius: var(--mat-sys-corner-small);
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+  font: var(--mat-sys-body-medium);
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+button[type='submit'] {
+  --mat-button-filled-container-height: 2.75rem;
+}
+
+.demo {
+  margin: 1.5rem 0 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+  text-align: center;
+}

@@ -44,6 +44,22 @@ describe('unauthorizedInterceptor', () => {
     expect((caught as HttpErrorResponse).status).toBe(401);
   });
 
+  it('passes on the token the request carried', () => {
+    http
+      .get('/api/v1/rooms', { headers: { Authorization: 'Bearer demo-token.usr_admin' } })
+      .subscribe({ error: () => undefined });
+
+    controller.expectOne('/api/v1/rooms').flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    expect(onUnauthorized).toHaveBeenCalledExactlyOnceWith('demo-token.usr_admin');
+  });
+
+  it('passes on null when the request carried no token', () => {
+    fail('/api/v1/rooms', 401);
+
+    expect(onUnauthorized).toHaveBeenCalledExactlyOnceWith(null);
+  });
+
   it('reports it for a silent request too, which has no session to continue with', () => {
     fail('/api/v1/rooms', 401, { context: new HttpContext().set(SILENT, true) });
 

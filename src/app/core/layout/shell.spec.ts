@@ -80,6 +80,14 @@ describe('Shell', () => {
       expect(screen.getByRole('main')).toBeInTheDocument();
     });
 
+    it('puts the account menu in the top bar', async () => {
+      await open();
+
+      expect(
+        within(screen.getByRole('banner')).getByRole('button', { name: 'Account menu' }),
+      ).toBeInTheDocument();
+    });
+
     it('lists the sections of the app in order, each a link', async () => {
       await open();
 

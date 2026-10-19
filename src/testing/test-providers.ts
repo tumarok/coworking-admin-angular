@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { provideRouter, type Routes } from '@angular/router';
 import { provideApi } from '@core/api/provide-api';
+import { provideAuth } from '@core/auth/provide-auth';
 import { API_BASE_URL } from '@core/http/api-url';
 import { ACCESS_TOKEN } from '@core/http/session-hooks';
 import { apiUrl } from './msw-server';
@@ -43,4 +44,12 @@ export function provideTestApi(): (Provider | EnvironmentProviders)[] {
     { provide: ACCESS_TOKEN, useValue: () => sessionStorage.getItem('coworking-admin.token') },
     provideTestMaterial(),
   ];
+}
+
+/**
+ * `provideTestApi()` with the real session behind it: the token comes from the session store (which
+ * reads what `signIn()` stored) and a rejected token ends the session, as in the app.
+ */
+export function provideTestSession(routes: Routes = []): (Provider | EnvironmentProviders)[] {
+  return [provideRouter(routes), ...provideTestApi(), provideAuth()];
 }

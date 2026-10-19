@@ -41,6 +41,10 @@ mat-toolbar {
   text-decoration: none;
 }
 
+.spacer {
+  flex: 1;
+}
+
 .loading {
   position: absolute;
   inset: auto 0 0;
