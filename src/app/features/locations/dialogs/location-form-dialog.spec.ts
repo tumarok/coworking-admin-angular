@@ -26,6 +26,12 @@ class Opener {
 }
 
 describe('LocationFormDialog', () => {
+  // The first open fetches the form's chunk (Material select, time picker, Zod). Doing it here
+  // keeps that one-off cost out of the first test, which would otherwise race the 5 s wait.
+  beforeAll(async () => {
+    await import('./location-form-dialog');
+  });
+
   let api: ReturnType<typeof installMockApi>;
   let requests: string[];
 

@@ -1,0 +1,50 @@
+@if (query.value(); as member) {
+  <app-page-header
+    [title]="fullName(member)"
+    [subtitle]="member.company ?? undefined"
+    [back]="back"
+  >
+    <button mat-stroked-button type="button" (click)="edit(member)">Edit</button>
+    <button
+      mat-stroked-button
+      class="danger"
+      type="button"
+      [disabled]="deleting()"
+      (click)="remove(member)"
+    >
+      Delete
+    </button>
+  </app-page-header>
+
+  <app-details-list [record]="member" [fields]="fields">
+    <ng-template appDetailValue="status" let-member>
+      <app-status-chip [status]="member.status" />
+    </ng-template>
+    <ng-template appDetailValue="email" let-member>
+      <a [href]="'mailto:' + member.email">{{ member.email }}</a>
+    </ng-template>
+    <ng-template appDetailValue="bookings" let-member>
+      <a routerLink="/bookings" [queryParams]="{ memberId: member.id }">View bookings</a>
+    </ng-template>
+  </app-details-list>
+} @else if (notFound()) {
+  <app-empty-state
+    icon="group"
+    title="Member not found"
+    message="They may have been removed."
+    [headingLevel]="1"
+  >
+    <a mat-flat-button routerLink="/members">All members</a>
+  </app-empty-state>
+} @else if (query.error(); as error) {
+  <app-empty-state
+    icon="error"
+    title="Could not load the member"
+    [message]="error.message"
+    [headingLevel]="1"
+  >
+    <button mat-stroked-button type="button" (click)="query.refresh()">Try again</button>
+  </app-empty-state>
+} @else {
+  <p role="status">Loading member…</p>
+}

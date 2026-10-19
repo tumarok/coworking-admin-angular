@@ -1,0 +1,123 @@
+<form
+  [formRoot]="form"
+  [attr.aria-busy]="form().submitting()"
+  (keydown.enter)="revealErrors($event)"
+>
+  <h2 mat-dialog-title>{{ title }}</h2>
+
+  <mat-dialog-content>
+    <app-form-banner [messages]="failures()" />
+
+    <div class="fields">
+      <app-form-field
+        #firstName
+        label="First name"
+        required
+        [errors]="visibleErrors(form.firstName)"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            data-autofocus
+            autocomplete="off"
+            [id]="firstName.inputId"
+            [aria-describedby]="firstName.describedBy()"
+            [formField]="form.firstName"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #lastName label="Last name" required [errors]="visibleErrors(form.lastName)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            autocomplete="off"
+            [id]="lastName.inputId"
+            [aria-describedby]="lastName.describedBy()"
+            [formField]="form.lastName"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #email label="Email" required [errors]="visibleErrors(form.email)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            type="email"
+            inputmode="email"
+            autocomplete="off"
+            [id]="email.inputId"
+            [aria-describedby]="email.describedBy()"
+            [formField]="form.email"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #phone label="Phone" required [errors]="visibleErrors(form.phone)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            type="tel"
+            inputmode="tel"
+            autocomplete="off"
+            placeholder="+380 44 123 45 67"
+            [id]="phone.inputId"
+            [aria-describedby]="phone.describedBy()"
+            [formField]="form.phone"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #company class="wide" label="Company" [errors]="visibleErrors(form.company)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            autocomplete="off"
+            [id]="company.inputId"
+            [aria-describedby]="company.describedBy()"
+            [formField]="form.company"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #plan label="Plan" [errors]="visibleErrors(form.plan)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            [id]="plan.inputId"
+            [aria-labelledby]="plan.labelId"
+            [aria-describedby]="plan.describedBy()"
+            [formField]="form.plan"
+          >
+            @for (option of plans; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #status label="Status" [errors]="visibleErrors(form.status)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            [id]="status.inputId"
+            [aria-labelledby]="status.labelId"
+            [aria-describedby]="status.describedBy()"
+            [formField]="form.status"
+          >
+            @for (option of statuses; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="undefined" [disabled]="pending()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      {{ pending() ? 'Saving…' : 'Save' }}
+    </button>
+  </mat-dialog-actions>
+</form>
