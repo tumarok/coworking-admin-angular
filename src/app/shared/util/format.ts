@@ -24,6 +24,12 @@ export function formatMoney(cents: number, currency = 'EUR'): string {
   return format.format(cents / 100);
 }
 
+/** Integer cents as the euros a form field shows: `1250` -> `12.5`. */
+export const centsToEuros = (cents: number): number => cents / 100;
+
+/** Euros from a form field as integer cents, rounded to the nearest cent: `12.5` -> `1250`. */
+export const eurosToCents = (euros: number): number => Math.round(euros * 100);
+
 type DatePart = 'date' | 'time';
 
 /**

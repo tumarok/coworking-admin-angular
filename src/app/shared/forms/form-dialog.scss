@@ -1,3 +1,5 @@
+// The layout of a form in a dialog (banner, two columns of fields), the `styleUrl` of every
+// feature's form dialog.
 // The form wraps the title, the content and the actions, which Material lays out as siblings.
 form {
   display: contents;
@@ -21,6 +23,17 @@ app-form-banner {
 
 mat-form-field {
   width: 100%;
+}
+
+// A number is typed or stepped with the arrow keys: the browser's own spin buttons would crowd the
+// unit beside it, and a unit never wraps.
+input[type='number'] {
+  appearance: textfield;
+}
+
+[matTextPrefix],
+[matTextSuffix] {
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {

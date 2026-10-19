@@ -25,8 +25,8 @@ export interface DataTableColumn<T> {
   header: string;
   /** The text of a cell. Not needed when the column has a custom cell. */
   value?: (row: T) => string;
-  /** Turns the text into a link to this route. */
-  link?: (row: T) => string | readonly string[];
+  /** Turns the text into a link to this route; a row it returns `undefined` for stays plain text. */
+  link?: (row: T) => string | readonly string[] | undefined;
   /** Keeps the header for screen readers only, for columns of controls. */
   hideHeader?: boolean;
   /** Keeps a cell on one line. */

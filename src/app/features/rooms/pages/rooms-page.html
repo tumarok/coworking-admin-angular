@@ -1,0 +1,55 @@
+<app-page-header title="Rooms" subtitle="Meeting rooms, offices, desks and event spaces">
+  <button mat-flat-button type="button" (click)="create()">
+    <app-icon name="add" size="1.125rem" />
+    New room
+  </button>
+</app-page-header>
+
+<app-list-toolbar
+  label="Filter rooms"
+  [filtersActive]="store.hasActiveFilters()"
+  (clearClick)="store.reset()"
+>
+  <app-search-input
+    label="Search rooms"
+    [value]="store.params().q"
+    (searchChange)="store.setSearch($event)"
+  />
+  <app-filter-select
+    label="Location"
+    anyLabel="Any location"
+    [options]="locationOptions()"
+    [value]="store.params().locationId"
+    (valueChange)="store.setFilter('locationId', $event)"
+  />
+  <app-filter-select
+    label="Type"
+    anyLabel="Any type"
+    [options]="typeOptions"
+    [value]="store.params().type"
+    (valueChange)="store.setFilter('type', $event)"
+  />
+  <app-filter-select
+    label="Status"
+    anyLabel="Any status"
+    [options]="statusOptions"
+    [value]="store.params().status"
+    (valueChange)="store.setFilter('status', $event)"
+  />
+</app-list-toolbar>
+
+<app-data-table
+  caption="Rooms"
+  [columns]="columns"
+  [rows]="rooms.value()?.items"
+  [total]="rooms.value()?.total ?? 0"
+  [page]="store.params().page"
+  [limit]="store.params().limit"
+  [fetching]="rooms.isFetching()"
+  [error]="rooms.error()?.message"
+  [emptyMessage]="emptyMessage()"
+  (pageChange)="store.paginate($event)"
+  (retry)="rooms.refresh()"
+>
+  <ng-template appCell="status" let-row><app-status-chip [status]="row.status" /></ng-template>
+</app-data-table>

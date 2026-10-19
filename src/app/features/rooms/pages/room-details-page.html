@@ -1,0 +1,58 @@
+@if (query.value(); as room) {
+  <app-page-header [title]="room.name" [subtitle]="subtitle(room)" [back]="back">
+    <button mat-stroked-button type="button" (click)="edit(room)">Edit</button>
+    <button
+      mat-stroked-button
+      class="danger"
+      type="button"
+      [disabled]="deleting()"
+      (click)="remove(room)"
+    >
+      Delete
+    </button>
+  </app-page-header>
+
+  <app-details-list [record]="room" [fields]="fields">
+    <ng-template appDetailValue="status" let-room>
+      <app-status-chip [status]="room.status" />
+    </ng-template>
+    <ng-template appDetailValue="location" let-room>
+      @if (hasLocation(room)) {
+        <a [routerLink]="['/locations', room.locationId]">{{ room.locationName }}</a>
+      } @else {
+        {{ deletedLocation }}
+      }
+    </ng-template>
+    <ng-template appDetailValue="amenities" let-room>
+      @if (room.amenities.length > 0) {
+        <mat-chip-set role="list" aria-label="Amenities">
+          @for (amenity of room.amenities; track amenity) {
+            <mat-chip role="listitem">{{ labelOf(amenity) }}</mat-chip>
+          }
+        </mat-chip-set>
+      } @else {
+        —
+      }
+    </ng-template>
+  </app-details-list>
+} @else if (notFound()) {
+  <app-empty-state
+    icon="meeting_room"
+    title="Room not found"
+    message="It may have been deleted."
+    [headingLevel]="1"
+  >
+    <a mat-flat-button routerLink="/rooms">All rooms</a>
+  </app-empty-state>
+} @else if (query.error(); as error) {
+  <app-empty-state
+    icon="error"
+    title="Could not load the room"
+    [message]="error.message"
+    [headingLevel]="1"
+  >
+    <button mat-stroked-button type="button" (click)="query.refresh()">Try again</button>
+  </app-empty-state>
+} @else {
+  <p role="status">Loading room…</p>
+}

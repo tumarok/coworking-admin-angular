@@ -9,7 +9,7 @@ import { App } from './app';
 import { routes } from './app.routes';
 
 /** The locations section inside the real application: guard, shell, lazy routes and titles. */
-describe('the locations section of the app', { timeout: 20_000 }, () => {
+describe('the locations section of the app', () => {
   beforeEach(() => {
     installMockApi();
   });

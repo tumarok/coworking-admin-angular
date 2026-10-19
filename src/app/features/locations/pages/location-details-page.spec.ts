@@ -13,7 +13,7 @@ import { LOCATION_ROUTES } from '../locations.routes';
 @Component({ imports: [RouterOutlet], template: '<router-outlet />' })
 class Outlet {}
 
-describe('LocationDetailsPage', { timeout: 20_000 }, () => {
+describe('LocationDetailsPage', () => {
   let api: ReturnType<typeof installMockApi>;
   let requests: string[];
 
@@ -208,7 +208,7 @@ describe('LocationDetailsPage', { timeout: 20_000 }, () => {
   describe('editing', () => {
     const openForm = async () => {
       await userEvent.click(screen.getByRole('button', { name: 'Edit' }));
-      return screen.findByRole('dialog', { name: 'Edit Riverside Hub' }, { timeout: 5000 });
+      return screen.findByRole('dialog', { name: 'Edit Riverside Hub' });
     };
 
     it('opens the form with the location’s values', async () => {

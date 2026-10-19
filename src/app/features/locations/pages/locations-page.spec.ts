@@ -13,7 +13,7 @@ import { LOCATION_ROUTES } from '../locations.routes';
 @Component({ imports: [RouterOutlet], template: '<router-outlet />' })
 class Outlet {}
 
-describe('LocationsPage', { timeout: 20_000 }, () => {
+describe('LocationsPage', () => {
   let api: ReturnType<typeof installMockApi>;
   let requests: URL[];
   let names: { all: string[]; inactive: string[] };
@@ -257,7 +257,7 @@ describe('LocationsPage', { timeout: 20_000 }, () => {
       await loaded(names.all);
 
       await userEvent.click(screen.getByRole('button', { name: 'New location' }));
-      const dialog = await screen.findByRole('dialog', { name: 'New location' }, { timeout: 5000 });
+      const dialog = await screen.findByRole('dialog', { name: 'New location' });
       await userEvent.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Harbour Hub');
       await userEvent.type(within(dialog).getByRole('textbox', { name: /^City/ }), 'Lisbon');
       await userEvent.type(
@@ -280,7 +280,7 @@ describe('LocationsPage', { timeout: 20_000 }, () => {
       await loaded(names.all);
 
       await userEvent.click(screen.getByRole('button', { name: 'New location' }));
-      const dialog = await screen.findByRole('dialog', { name: 'New location' }, { timeout: 5000 });
+      const dialog = await screen.findByRole('dialog', { name: 'New location' });
       await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
       await vi.waitFor(() => {
@@ -293,7 +293,7 @@ describe('LocationsPage', { timeout: 20_000 }, () => {
       await loaded(names.all);
 
       await userEvent.click(screen.getByRole('button', { name: 'New location' }));
-      const dialog = await screen.findByRole('dialog', { name: 'New location' }, { timeout: 5000 });
+      const dialog = await screen.findByRole('dialog', { name: 'New location' });
       await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
 
       await vi.waitFor(() => {

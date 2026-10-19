@@ -20,7 +20,10 @@ export function injectCreateLocation(): MutationRef<LocationInput, Location> {
   });
 }
 
-/** Replaces a location (the API has no partial update). Silent like the create: the form reports. */
+/**
+ * Updates a location with its whole input: a PATCH, though the API takes no partial update. Silent like
+ * the create: the form reports.
+ */
 export function injectUpdateLocation(): MutationRef<UpdateLocationArg, Location> {
   return createMutation({
     request: ({ id, input }) => ({

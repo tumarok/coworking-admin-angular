@@ -45,10 +45,11 @@
           </th>
           <td mat-cell *matCellDef="let row" [class.nowrap]="column.nowrap">
             @let custom = cellTemplates().get(column.key);
+            @let target = column.link?.(row);
             @if (custom) {
               <ng-container *ngTemplateOutlet="custom; context: { $implicit: row }" />
-            } @else if (column.link) {
-              <a [routerLink]="column.link(row)">{{ textOf(column, row) }}</a>
+            } @else if (target) {
+              <a [routerLink]="target">{{ textOf(column, row) }}</a>
             } @else {
               {{ textOf(column, row) }}
             }

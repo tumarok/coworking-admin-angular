@@ -83,7 +83,7 @@ export interface LocationFormDialogData {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './location-form-dialog.html',
-  styleUrl: './location-form-dialog.scss',
+  styleUrl: '../../../shared/forms/form-dialog.scss',
 })
 export class LocationFormDialog {
   private readonly data = inject<LocationFormDialogData>(MAT_DIALOG_DATA);

@@ -1,4 +1,6 @@
 import {
+  centsToEuros,
+  eurosToCents,
   formatDate,
   formatDateTime,
   formatMoney,
@@ -33,6 +35,21 @@ describe('formatMoney', () => {
   it('shows a placeholder for a value that is not a number', () => {
     expect(formatMoney(Number.NaN)).toBe('—');
     expect(formatMoney(Number.POSITIVE_INFINITY)).toBe('—');
+  });
+});
+
+describe('euros and cents', () => {
+  it('turns cents into the euros of a form field and back', () => {
+    expect(centsToEuros(3250)).toBe(32.5);
+    expect(eurosToCents(32.5)).toBe(3250);
+    expect(eurosToCents(centsToEuros(1999))).toBe(1999);
+  });
+
+  it('rounds to the nearest cent, absorbing the error of binary fractions', () => {
+    expect(eurosToCents(19.99)).toBe(1999);
+    expect(eurosToCents(12.345)).toBe(1235);
+    expect(eurosToCents(12.344)).toBe(1234);
+    expect(eurosToCents(0.1 + 0.2)).toBe(30);
   });
 });
 

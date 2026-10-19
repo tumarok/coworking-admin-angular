@@ -25,7 +25,7 @@ class Opener {
   }
 }
 
-describe('LocationFormDialog', { timeout: 20_000 }, () => {
+describe('LocationFormDialog', () => {
   let api: ReturnType<typeof installMockApi>;
   let requests: string[];
 
@@ -50,11 +50,7 @@ describe('LocationFormDialog', { timeout: 20_000 }, () => {
     await userEvent.click(
       screen.getByRole('button', { name: editing ? 'Open edit form' : 'Open form' }),
     );
-    const dialog = await screen.findByRole(
-      'dialog',
-      { name: editing ? /^Edit / : 'New location' },
-      { timeout: 5000 },
-    );
+    const dialog = await screen.findByRole('dialog', { name: editing ? /^Edit / : 'New location' });
     return { ...view, opener, dialog };
   }
 

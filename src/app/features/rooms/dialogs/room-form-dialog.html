@@ -1,0 +1,150 @@
+<form
+  [formRoot]="form"
+  [attr.aria-busy]="form().submitting()"
+  (keydown.enter)="revealErrors($event)"
+>
+  <h2 mat-dialog-title>{{ title }}</h2>
+
+  <mat-dialog-content>
+    <app-form-banner [messages]="failures()" />
+
+    <div class="fields">
+      <app-form-field
+        #location
+        class="wide"
+        label="Location"
+        required
+        [hint]="
+          locationsFailed()
+            ? 'The locations could not be loaded. Close the form and try again.'
+            : undefined
+        "
+        [errors]="visibleErrors(form.locationId)"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            data-autofocus
+            placeholder="Choose a location"
+            [id]="location.inputId"
+            [aria-labelledby]="location.labelId"
+            [aria-describedby]="location.describedBy()"
+            [formField]="form.locationId"
+          >
+            @for (option of locations(); track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #name label="Name" required [errors]="visibleErrors(form.name)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            autocomplete="off"
+            [id]="name.inputId"
+            [aria-describedby]="name.describedBy()"
+            [formField]="form.name"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #type label="Type" [errors]="visibleErrors(form.type)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            [id]="type.inputId"
+            [aria-labelledby]="type.labelId"
+            [aria-describedby]="type.describedBy()"
+            [formField]="form.type"
+          >
+            @for (option of types; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #capacity label="Capacity" required [errors]="visibleErrors(form.capacity)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            type="number"
+            inputmode="numeric"
+            step="1"
+            [id]="capacity.inputId"
+            [aria-describedby]="capacity.describedBy()"
+            [formField]="form.capacity"
+          />
+          <span matTextSuffix>seats</span>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field
+        #rate
+        label="Hourly rate (EUR)"
+        required
+        [errors]="visibleErrors(form.hourlyRate)"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <span matTextPrefix aria-hidden="true">€&nbsp;</span>
+          <input
+            matInput
+            type="number"
+            inputmode="decimal"
+            step="0.01"
+            [id]="rate.inputId"
+            [aria-describedby]="rate.describedBy()"
+            [formField]="form.hourlyRate"
+          />
+          <span matTextSuffix>/ hour</span>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field
+        #amenitiesField
+        class="wide"
+        label="Amenities"
+        [errors]="visibleErrors(form.amenities)"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            multiple
+            placeholder="None"
+            [id]="amenitiesField.inputId"
+            [aria-labelledby]="amenitiesField.labelId"
+            [aria-describedby]="amenitiesField.describedBy()"
+            [formField]="form.amenities"
+          >
+            @for (option of amenities; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #status label="Status" [errors]="visibleErrors(form.status)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            [id]="status.inputId"
+            [aria-labelledby]="status.labelId"
+            [aria-describedby]="status.describedBy()"
+            [formField]="form.status"
+          >
+            @for (option of statuses; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="undefined" [disabled]="pending()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      {{ pending() ? 'Saving…' : 'Save' }}
+    </button>
+  </mat-dialog-actions>
+</form>

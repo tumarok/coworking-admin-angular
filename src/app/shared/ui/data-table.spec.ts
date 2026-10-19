@@ -20,7 +20,12 @@ const rows: Row[] = [
 ];
 
 const columns: DataTableColumn<Row>[] = [
-  { key: 'name', header: 'Name', value: (r) => r.name, link: (r) => ['/rooms', r.id] },
+  {
+    key: 'name',
+    header: 'Name',
+    value: (r) => r.name,
+    link: (r) => (r.id === 'c' ? undefined : ['/rooms', r.id]),
+  },
   { key: 'id', header: 'Code', value: (r) => r.id.toUpperCase(), nowrap: true },
   { key: 'status', header: 'Status' },
   { key: 'actions', header: 'Actions', hideHeader: true, value: () => '' },
@@ -101,6 +106,14 @@ describe('DataTable', () => {
     expect(within(body[1]).getByRole('cell', { name: 'B' })).toBeInTheDocument();
     expect(within(body[0]).getByText('Active')).toBeInTheDocument();
     expect(within(body[1]).getByText('Inactive')).toBeInTheDocument();
+  });
+
+  it('leaves the text of a row plain when its link has no target', async () => {
+    await show();
+
+    const cedar = screen.getAllByRole('row')[3];
+    expect(within(cedar).getByRole('cell', { name: 'Cedar' })).toBeInTheDocument();
+    expect(within(cedar).queryByRole('link')).not.toBeInTheDocument();
   });
 
   describe('loading', () => {

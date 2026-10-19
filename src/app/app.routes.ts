@@ -20,6 +20,10 @@ export const routes: Routes = [
           import('@features/locations/locations.routes').then((m) => m.LOCATION_ROUTES),
       },
       {
+        path: 'rooms',
+        loadChildren: () => import('@features/rooms/rooms.routes').then((m) => m.ROOM_ROUTES),
+      },
+      {
         path: '**',
         title: 'Page not found',
         loadComponent: () => import('@core/layout/not-found-page').then((m) => m.NotFoundPage),
