@@ -15,6 +15,11 @@ export const routes: Routes = [
     loadComponent: () => import('@core/layout/shell').then((m) => m.Shell),
     children: [
       {
+        path: 'locations',
+        loadChildren: () =>
+          import('@features/locations/locations.routes').then((m) => m.LOCATION_ROUTES),
+      },
+      {
         path: '**',
         title: 'Page not found',
         loadComponent: () => import('@core/layout/not-found-page').then((m) => m.NotFoundPage),

@@ -2,7 +2,7 @@ import type { EnvironmentProviders, Provider } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
-import { provideRouter, type Routes } from '@angular/router';
+import { provideRouter, type Routes, withComponentInputBinding } from '@angular/router';
 import { provideApi } from '@core/api/provide-api';
 import { provideAuth } from '@core/auth/provide-auth';
 import { API_BASE_URL } from '@core/http/api-url';
@@ -17,11 +17,11 @@ import { apiUrl } from './msw-server';
  *
  * Requests go through `HttpTestingController`, so a test decides what the backend answers.
  * Material's animations are off: a dialog or a drawer is open and closed at once, and there is
- * no animation to wait for.
+ * no animation to wait for. Route and query parameters arrive as component inputs, as in the app.
  */
 export function provideTestApp(routes: Routes = []): (Provider | EnvironmentProviders)[] {
   return [
-    provideRouter(routes),
+    provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(),
     provideHttpClientTesting(),
     provideTestMaterial(),
@@ -51,5 +51,5 @@ export function provideTestApi(): (Provider | EnvironmentProviders)[] {
  * reads what `signIn()` stored) and a rejected token ends the session, as in the app.
  */
 export function provideTestSession(routes: Routes = []): (Provider | EnvironmentProviders)[] {
-  return [provideRouter(routes), ...provideTestApi(), provideAuth()];
+  return [provideRouter(routes, withComponentInputBinding()), ...provideTestApi(), provideAuth()];
 }

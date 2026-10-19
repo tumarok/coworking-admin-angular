@@ -1,0 +1,50 @@
+@if (query.value(); as location) {
+  <app-page-header
+    [title]="location.name"
+    [subtitle]="location.address + ', ' + location.city"
+    [back]="back"
+  >
+    <button mat-stroked-button type="button" (click)="edit(location)">Edit</button>
+    <button
+      mat-stroked-button
+      class="danger"
+      type="button"
+      [disabled]="deleting()"
+      (click)="remove(location)"
+    >
+      Delete
+    </button>
+  </app-page-header>
+
+  <app-details-list [record]="location" [fields]="fields">
+    <ng-template appDetailValue="status" let-location>
+      <app-status-chip [status]="location.status" />
+    </ng-template>
+    <ng-template appDetailValue="rooms" let-location>
+      {{ location.roomCount }}
+      <a class="rooms-link" routerLink="/rooms" [queryParams]="{ locationId: location.id }">
+        View rooms
+      </a>
+    </ng-template>
+  </app-details-list>
+} @else if (notFound()) {
+  <app-empty-state
+    icon="domain"
+    title="Location not found"
+    message="It may have been deleted."
+    [headingLevel]="1"
+  >
+    <a mat-flat-button routerLink="/locations">All locations</a>
+  </app-empty-state>
+} @else if (query.error(); as error) {
+  <app-empty-state
+    icon="error"
+    title="Could not load the location"
+    [message]="error.message"
+    [headingLevel]="1"
+  >
+    <button mat-stroked-button type="button" (click)="query.refresh()">Try again</button>
+  </app-empty-state>
+} @else {
+  <p role="status">Loading location…</p>
+}

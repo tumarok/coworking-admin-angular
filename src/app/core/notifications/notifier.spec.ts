@@ -33,6 +33,20 @@ describe('Notifier', () => {
     expect(bar?.querySelector('button')).toHaveTextContent('Dismiss');
   });
 
+  it('shows a success politely and a failure assertively, and lets the failure stay longer', async () => {
+    await notifier.success('Location created');
+    await notifier.error('Room not found');
+
+    expect(open).toHaveBeenNthCalledWith(1, 'Location created', 'Dismiss', {
+      duration: 4000,
+      politeness: 'polite',
+    });
+    expect(open).toHaveBeenNthCalledWith(2, 'Room not found', 'Dismiss', {
+      duration: 6000,
+      politeness: 'assertive',
+    });
+  });
+
   it('shows the same message repeated at once only once', async () => {
     await notifier.error('Room not found');
     await notifier.error('Room not found');

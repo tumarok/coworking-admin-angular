@@ -32,7 +32,7 @@ export interface FieldError {
   selector: 'app-form-field',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <label [for]="inputId">
+    <label [id]="labelId" [for]="inputId">
       {{ label() }}
       @if (required()) {
         <span class="marker" aria-hidden="true">*</span>
@@ -53,8 +53,13 @@ export class AppFormField {
   readonly hint = input<string>();
   readonly errors = input<readonly FieldError[]>([]);
 
-  /** Ids for the control (`id`) and its error and hint (`aria-describedby`). */
+  /**
+   * Ids for the control (`id`), its error and hint (`aria-describedby`) and the label. A control that
+   * is not a native input (`mat-select`) takes the label's id as its `aria-labelledby`, as `for`
+   * only names native controls.
+   */
   readonly inputId = `app-field-${nextId++}`;
+  readonly labelId = `${this.inputId}-label`;
   protected readonly errorId = `${this.inputId}-error`;
   protected readonly hintId = `${this.inputId}-hint`;
 

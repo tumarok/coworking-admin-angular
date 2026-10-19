@@ -1,0 +1,118 @@
+<form
+  [formRoot]="form"
+  [attr.aria-busy]="form().submitting()"
+  (keydown.enter)="revealErrors($event)"
+>
+  <h2 mat-dialog-title>{{ title }}</h2>
+
+  <mat-dialog-content>
+    <app-form-banner [messages]="failures()" />
+
+    <div class="fields">
+      <app-form-field #name label="Name" required [errors]="visibleErrors(form.name)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            data-autofocus
+            autocomplete="off"
+            [id]="name.inputId"
+            [aria-describedby]="name.describedBy()"
+            [formField]="form.name"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #city label="City" required [errors]="visibleErrors(form.city)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            autocomplete="off"
+            [id]="city.inputId"
+            [aria-describedby]="city.describedBy()"
+            [formField]="form.city"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field
+        #address
+        class="wide"
+        label="Address"
+        required
+        [errors]="visibleErrors(form.address)"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            autocomplete="off"
+            [id]="address.inputId"
+            [aria-describedby]="address.describedBy()"
+            [formField]="form.address"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #timezone label="Time zone" [errors]="visibleErrors(form.timezone)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            [id]="timezone.inputId"
+            [aria-labelledby]="timezone.labelId"
+            [aria-describedby]="timezone.describedBy()"
+            [formField]="form.timezone"
+          >
+            @for (option of timezones; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #status label="Status" [errors]="visibleErrors(form.status)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-select
+            [id]="status.inputId"
+            [aria-labelledby]="status.labelId"
+            [aria-describedby]="status.describedBy()"
+            [formField]="form.status"
+          >
+            @for (option of statuses; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #opensAt label="Opens at" required [errors]="visibleErrors(form.opensAt)">
+        <app-time-field
+          pickerLabel="Choose the opening time"
+          [inputId]="opensAt.inputId"
+          [describedBy]="opensAt.describedBy()"
+          [formField]="form.opensAt"
+        />
+      </app-form-field>
+
+      <app-form-field
+        #closesAt
+        label="Closes at"
+        required
+        [errors]="visibleErrors(form.closesAt, form.opensAt)"
+      >
+        <app-time-field
+          pickerLabel="Choose the closing time"
+          [inputId]="closesAt.inputId"
+          [describedBy]="closesAt.describedBy()"
+          [formField]="form.closesAt"
+        />
+      </app-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="undefined" [disabled]="pending()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      {{ pending() ? 'Saving…' : 'Save' }}
+    </button>
+  </mat-dialog-actions>
+</form>

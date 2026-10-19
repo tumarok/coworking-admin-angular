@@ -8,6 +8,7 @@ import { AppFormField, type FieldError } from './form-field';
     <app-form-field #name label="Name" [required]="required()" [hint]="hint()" [errors]="errors()">
       <input [id]="name.inputId" [attr.aria-describedby]="name.describedBy() || null" />
     </app-form-field>
+    <div role="group" [attr.aria-labelledby]="name.labelId">A control that is not an input</div>
   `,
 })
 class Host {
@@ -31,6 +32,12 @@ describe('AppFormField', () => {
     await open();
 
     expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument();
+  });
+
+  it('gives the label an id, for controls that cannot be named by `for`', async () => {
+    await open();
+
+    expect(screen.getByRole('group', { name: 'Name' })).toBeInTheDocument();
   });
 
   it('marks a required field visually without adding to its accessible name', async () => {

@@ -1,0 +1,41 @@
+<app-page-header title="Locations" subtitle="Spaces in the network and their opening hours">
+  <button mat-flat-button type="button" (click)="create()">
+    <app-icon name="add" size="1.125rem" />
+    New location
+  </button>
+</app-page-header>
+
+<app-list-toolbar
+  label="Filter locations"
+  [filtersActive]="store.hasActiveFilters()"
+  (clearClick)="store.reset()"
+>
+  <app-search-input
+    label="Search name, city or address"
+    [value]="store.params().q"
+    (searchChange)="store.setSearch($event)"
+  />
+  <app-filter-select
+    label="Status"
+    anyLabel="Any status"
+    [options]="statusOptions"
+    [value]="store.params().status"
+    (valueChange)="store.setFilter('status', $event)"
+  />
+</app-list-toolbar>
+
+<app-data-table
+  caption="Locations"
+  [columns]="columns"
+  [rows]="locations.value()?.items"
+  [total]="locations.value()?.total ?? 0"
+  [page]="store.params().page"
+  [limit]="store.params().limit"
+  [fetching]="locations.isFetching()"
+  [error]="locations.error()?.message"
+  [emptyMessage]="emptyMessage()"
+  (pageChange)="store.paginate($event)"
+  (retry)="locations.refresh()"
+>
+  <ng-template appCell="status" let-row><app-status-chip [status]="row.status" /></ng-template>
+</app-data-table>

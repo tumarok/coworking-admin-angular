@@ -1,0 +1,30 @@
+// The form wraps the title, the content and the actions, which Material lays out as siblings.
+form {
+  display: contents;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+app-form-banner {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
