@@ -31,6 +31,7 @@ import { SearchInput } from '@shared/ui/search-input';
 import { withCurrentOption } from '@shared/ui/select-option';
 import { StatusChip } from '@shared/ui/status-chip';
 import { formatMoney } from '@shared/util/format';
+import { timeSpan } from '@shared/util/time-span';
 import { map } from 'rxjs';
 import {
   bookingLabel,
@@ -39,7 +40,6 @@ import {
   hasLocation,
   hasMember,
   hasRoom,
-  timeSpan,
   UNKNOWN_LOCATION,
 } from '../booking-display';
 import { BULK_DONE, countBookings, STATUS_OPTIONS } from '../booking-options';

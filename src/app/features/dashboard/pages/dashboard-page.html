@@ -1,0 +1,107 @@
+<app-page-header title="Dashboard" [subtitle]="subtitle()">
+  <app-date-field
+    ariaLabel="Date"
+    pickerLabel="Choose the day"
+    [value]="entry()"
+    (valueChange)="pick($event)"
+    (touch)="leave()"
+  />
+</app-page-header>
+
+@if (failed()) {
+  <app-empty-state
+    icon="error"
+    title="Could not load the dashboard"
+    [message]="query.error()?.message"
+  >
+    <button mat-stroked-button type="button" (click)="query.refresh()">Retry</button>
+  </app-empty-state>
+} @else if (view(); as dashboard) {
+  <!-- The slot keeps its height, so the figures do not move when a reload starts. -->
+  <div class="updating">
+    @if (query.isFetching()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Updating the dashboard" />
+    }
+  </div>
+  <div class="content" [attr.aria-busy]="query.isFetching()">
+    <section class="kpis" aria-label="Key figures">
+      @for (kpi of dashboard.kpis; track kpi.icon) {
+        <div class="card kpi">
+          <span class="kpi-icon tone-{{ kpi.tone }}"><app-icon [name]="kpi.icon" /></span>
+          <div>
+            <p class="kpi-label">{{ kpi.label }}</p>
+            <p class="kpi-value">{{ kpi.value }}</p>
+          </div>
+        </div>
+      }
+    </section>
+
+    <section class="card" aria-labelledby="occupancy-title">
+      <h2 id="occupancy-title">Occupancy by location</h2>
+      @if (dashboard.occupancy.length) {
+        <ul class="plain">
+          @for (location of dashboard.occupancy; track location.locationId) {
+            <li class="occupancy">
+              <div class="occupancy-head">
+                <a [routerLink]="['/locations', location.locationId]">{{ location.name }}</a>
+                <span class="muted">{{ location.hours }}</span>
+              </div>
+              <mat-progress-bar
+                mode="determinate"
+                [value]="location.percent"
+                [attr.aria-label]="location.name + ' occupancy'"
+                [attr.aria-valuetext]="location.hours"
+              />
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted">No active locations.</p>
+      }
+    </section>
+
+    <section class="card" aria-labelledby="statuses-title">
+      <h2 id="statuses-title">Bookings by status</h2>
+      <ul class="plain">
+        @for (item of dashboard.statuses; track item.status) {
+          <li class="status-row">
+            <app-status-chip [status]="item.status" />
+            <span class="bar" aria-hidden="true">
+              <span class="fill" [style.width.%]="item.percent"></span>
+            </span>
+            <strong class="count">{{ item.count }}</strong>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="card upcoming" aria-labelledby="upcoming-title">
+      <div class="card-head">
+        <h2 id="upcoming-title">Coming up</h2>
+        <a routerLink="/bookings">All bookings</a>
+      </div>
+      @if (dashboard.upcoming.length) {
+        <ul class="plain">
+          @for (booking of dashboard.upcoming; track booking.id) {
+            <li class="upcoming-row">
+              <a
+                [routerLink]="['/bookings', booking.id]"
+                [attr.aria-label]="timeSpan(booking) + ', ' + booking.roomName"
+                >{{ timeSpan(booking) }}</a
+              >
+              <span class="where">
+                {{ booking.roomName }} · {{ booking.locationName }}
+                <span class="muted">{{ booking.memberName }}</span>
+              </span>
+              <app-status-chip [status]="booking.status" />
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="muted">Nothing scheduled.</p>
+      }
+    </section>
+  </div>
+} @else {
+  <p role="status">Loading dashboard…</p>
+}

@@ -1,12 +1,5 @@
 import type { Booking } from '@shared/api/contract';
-import {
-  bookingLabel,
-  hasLocation,
-  hasMember,
-  hasRoom,
-  missingLocation,
-  timeSpan,
-} from './booking-display';
+import { bookingLabel, hasLocation, hasMember, hasRoom, missingLocation } from './booking-display';
 
 const BOOKING: Pick<
   Booking,
@@ -43,17 +36,6 @@ describe('what a booking still has', () => {
   it('says a location is deleted when its room is there, and unknown when the room is gone too', () => {
     expect(missingLocation(BOOKING)).toBe('Deleted location');
     expect(missingLocation({ ...BOOKING, roomName: '—' })).toBe('Unknown location');
-  });
-});
-
-describe('timeSpan', () => {
-  it('reads the span on the clock of the zone', () => {
-    expect(timeSpan(BOOKING, 'Europe/Kyiv')).toBe('01 Jul 2026, 09:00–11:30');
-    expect(timeSpan(BOOKING, 'Europe/Lisbon')).toBe('01 Jul 2026, 07:00–09:30');
-  });
-
-  it('reads it in UTC, and says so, when the zone is not known', () => {
-    expect(timeSpan(BOOKING)).toBe('01 Jul 2026, 06:00–08:30 UTC');
   });
 });
 

@@ -5,6 +5,7 @@ import {
   formatDate,
   formatDateTime,
   formatMoney,
+  formatMonth,
   formatTime,
   formatTimeRange,
   humanize,
@@ -120,5 +121,20 @@ describe('durationHours', () => {
   it('answers nothing when an end is not a date', () => {
     expect(durationHours('soon', '2026-10-12T06:00:00.000Z')).toBeUndefined();
     expect(durationHours('2026-10-12T06:00:00.000Z', '')).toBeUndefined();
+  });
+});
+
+describe('formatMonth', () => {
+  it('names the month and the year', () => {
+    expect(formatMonth('2026-10-14T09:00:00.000Z')).toBe('October 2026');
+  });
+
+  it('reads the month on the clock of the zone, UTC by default', () => {
+    expect(formatMonth('2026-10-31T23:30:00.000Z')).toBe('October 2026');
+    expect(formatMonth('2026-10-31T23:30:00.000Z', 'Europe/Kyiv')).toBe('November 2026');
+  });
+
+  it('is a placeholder for what is not a date', () => {
+    expect(formatMonth('nope')).toBe('—');
   });
 });

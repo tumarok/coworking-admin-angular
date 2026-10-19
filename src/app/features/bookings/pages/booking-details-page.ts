@@ -8,11 +8,11 @@ import { EmptyState } from '@shared/ui/empty-state';
 import { type BackLink, PageHeader } from '@shared/ui/page-header';
 import { StatusChip } from '@shared/ui/status-chip';
 import { durationHours, formatDateTime, formatMoney } from '@shared/util/format';
+import { FALLBACK_TIME_ZONE } from '@shared/util/time-span';
 import {
   bookingLabel,
   DELETED_MEMBER,
   DELETED_ROOM,
-  FALLBACK_TIME_ZONE,
   hasLocation,
   hasMember,
   hasRoom,

@@ -15,6 +15,12 @@ export const routes: Routes = [
     loadComponent: () => import('@core/layout/shell').then((m) => m.Shell),
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        loadChildren: () =>
+          import('@features/dashboard/dashboard.routes').then((m) => m.DASHBOARD_ROUTES),
+      },
+      {
         path: 'locations',
         loadChildren: () =>
           import('@features/locations/locations.routes').then((m) => m.LOCATION_ROUTES),

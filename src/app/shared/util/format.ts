@@ -30,7 +30,7 @@ export const centsToEuros = (cents: number): number => cents / 100;
 /** Euros from a form field as integer cents, rounded to the nearest cent: `12.5` -> `1250`. */
 export const eurosToCents = (euros: number): number => Math.round(euros * 100);
 
-type DatePart = 'date' | 'time';
+type DatePart = 'date' | 'time' | 'month';
 
 /**
  * A formatter per time zone and part, made once. The zone is always explicit: a booking happens at
@@ -44,7 +44,9 @@ function dateFormat(part: DatePart, timeZone: string): Intl.DateTimeFormat {
       LOCALE,
       part === 'date'
         ? { timeZone, day: '2-digit', month: 'short', year: 'numeric' }
-        : { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
+        : part === 'month'
+          ? { timeZone, month: 'long', year: 'numeric' }
+          : { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' },
     );
     dateFormats.set(key, format);
   }
@@ -64,6 +66,12 @@ function toDate(iso: string): Date | undefined {
 export function formatDate(iso: string, timeZone = 'UTC'): string {
   const date = toDate(iso);
   return date ? dateFormat('date', timeZone).format(date) : PLACEHOLDER;
+}
+
+/** The month of an instant in a time zone: `October 2026`. UTC by default, as for {@link formatDate}. */
+export function formatMonth(iso: string, timeZone = 'UTC'): string {
+  const date = toDate(iso);
+  return date ? dateFormat('month', timeZone).format(date) : PLACEHOLDER;
 }
 
 /** The clock time of an instant in a time zone: `09:00`. */

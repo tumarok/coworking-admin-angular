@@ -13,7 +13,14 @@ import { MatIconButton } from '@angular/material/button';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { MatToolbar } from '@angular/material/toolbar';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import {
+  type IsActiveMatchOptions,
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 import { AppIcon } from '@shared/ui/app-icon';
 import { filter, map } from 'rxjs';
 import { APP_NAME } from './app-name';
@@ -55,6 +62,20 @@ export class Shell {
 
   protected readonly appName = APP_NAME;
   protected readonly navItems = NAV_ITEMS;
+  /** A section is current on its sub-pages, and with a query. */
+  protected readonly section: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'subset',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
+  /** The dashboard is current only on its own path, whatever query it carries (`?date=`). */
+  protected readonly exactPath: IsActiveMatchOptions = {
+    paths: 'exact',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
   protected readonly narrow = toSignal(
     inject(BreakpointObserver)
       .observe(NARROW)

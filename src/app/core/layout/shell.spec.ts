@@ -139,6 +139,12 @@ describe('Shell', () => {
       expect(current()).toEqual(['Locations']);
     });
 
+    it('keeps the dashboard active with a query, such as the day it shows', async () => {
+      await open('/?date=2026-10-12');
+
+      expect(current()).toEqual(['Dashboard']);
+    });
+
     it('keeps a section active on its sub-pages and with a query', async () => {
       await open('/rooms/room_7?tab=bookings');
 

@@ -5,9 +5,10 @@ import {
   timeOfDaySchema,
 } from '@shared/api/contract';
 import { numberField } from '@shared/forms/number-schema';
+import { FALLBACK_TIME_ZONE } from '@shared/util/time-span';
 import { utcToZoned, zonedToUtcIso } from '@shared/util/timezone';
 import { z } from 'zod';
-import { FALLBACK_TIME_ZONE, hasMember, hasRoom } from '../booking-display';
+import { hasMember, hasRoom } from '../booking-display';
 
 /**
  * The booking form's schema. The form differs from the API's input in how a time is written: a day

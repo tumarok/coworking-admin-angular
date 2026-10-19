@@ -44,7 +44,7 @@ import { TimeField } from '@shared/forms/time-field';
 import { visibleErrors } from '@shared/forms/visible-errors';
 import { deepEqual } from '@shared/util/deep-equal';
 import { formatTimeRange } from '@shared/util/format';
-import { FALLBACK_TIME_ZONE } from '../booking-display';
+import { FALLBACK_TIME_ZONE } from '@shared/util/time-span';
 import { injectCreateBooking, injectUpdateBooking } from '../data/booking-mutations';
 import { injectLocationById } from '../data/location-queries';
 import { injectMemberById, injectMemberSearch } from '../data/member-lookups';

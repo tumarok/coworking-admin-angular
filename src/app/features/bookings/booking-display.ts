@@ -1,5 +1,6 @@
 import type { Booking } from '@shared/api/contract';
-import { formatTimeRange, PLACEHOLDER } from '@shared/util/format';
+import { PLACEHOLDER } from '@shared/util/format';
+import { timeSpan } from '@shared/util/time-span';
 
 /** What to read where a booking's room or member no longer exists, instead of a bare dash. */
 export const DELETED_ROOM = 'Deleted room';
@@ -8,9 +9,6 @@ export const DELETED_MEMBER = 'Deleted member';
 /** Read where a booking's location cannot be told: the room is gone, or its location is. */
 export const UNKNOWN_LOCATION = 'Unknown location';
 export const DELETED_LOCATION = 'Deleted location';
-
-/** The clock used for a booking whose location is not known: the API's own. */
-export const FALLBACK_TIME_ZONE = 'UTC';
 
 /** The IANA time zone of each location, by its id. */
 export type TimeZones = ReadonlyMap<string, string>;
@@ -36,12 +34,6 @@ export const hasLocation = (booking: Pick<Booking, 'locationId' | 'locationName'
 /** What to read for the booking's location when it has none to link to. */
 export const missingLocation = (booking: Pick<Booking, 'roomName'>): string =>
   hasRoom(booking) ? DELETED_LOCATION : UNKNOWN_LOCATION;
-
-/** The booking's span on a clock; without a zone it reads in UTC and says so. */
-export function timeSpan(booking: Pick<Booking, 'startsAt' | 'endsAt'>, timeZone?: string): string {
-  const range = formatTimeRange(booking.startsAt, booking.endsAt, timeZone ?? FALLBACK_TIME_ZONE);
-  return timeZone ? range : `${range} ${FALLBACK_TIME_ZONE}`;
-}
 
 /** What names a booking where there is no heading for it: `Room name, 01 Jul 2026, 09:00–11:30`. */
 export const bookingLabel = (

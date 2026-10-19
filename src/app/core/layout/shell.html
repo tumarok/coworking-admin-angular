@@ -39,7 +39,7 @@
               routerLinkActive="active"
               ariaCurrentWhenActive="page"
               [routerLink]="item.path"
-              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              [routerLinkActiveOptions]="item.exact ? exactPath : section"
               (click)="closeDrawer()"
             >
               <app-icon [name]="item.icon" />
