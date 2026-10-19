@@ -9,7 +9,7 @@ import { FilterSelect } from '@shared/ui/filter-select';
 import { ListToolbar } from '@shared/ui/list-toolbar';
 import { PageHeader } from '@shared/ui/page-header';
 import { SearchInput } from '@shared/ui/search-input';
-import type { SelectOption } from '@shared/ui/select-option';
+import { withCurrentOption } from '@shared/ui/select-option';
 import { StatusChip } from '@shared/ui/status-chip';
 import { formatMoney, humanize } from '@shared/util/format';
 import { injectLocationOptions } from '../data/location-options';
@@ -55,12 +55,14 @@ export class RoomsPage {
    * The locations, plus the one a link or an old URL names when it is not among them (it was
    * deleted), so the filter in force is on screen and can be taken off.
    */
-  protected readonly locationOptions = computed<readonly SelectOption[]>(() => {
-    const options = this.locations.options();
-    const id = this.store.params().locationId;
-    const unknown = id && this.locations.loaded() && !options.some((o) => o.value === id);
-    return unknown ? [{ value: id, label: UNKNOWN_LOCATION }, ...options] : options;
-  });
+  protected readonly locationOptions = computed(() =>
+    withCurrentOption(
+      this.locations.options(),
+      this.store.params().locationId,
+      this.locations.loaded(),
+      UNKNOWN_LOCATION,
+    ),
+  );
   protected readonly typeOptions = TYPE_OPTIONS;
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly emptyMessage = computed(() =>

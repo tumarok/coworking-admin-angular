@@ -1,0 +1,53 @@
+@if (booking(); as booking) {
+  <app-page-header [title]="title(booking)" [back]="back">
+    <app-status-chip appPageSubtitle [status]="booking.status" />
+    <app-booking-status-actions [booking]="booking" />
+    @if (editable(booking)) {
+      <button mat-stroked-button type="button" (click)="edit(booking)">Edit</button>
+    }
+  </app-page-header>
+
+  <app-details-list [record]="booking" [fields]="fields">
+    <ng-template appDetailValue="room" let-booking>
+      @if (hasRoom(booking)) {
+        <a [routerLink]="['/rooms', booking.roomId]">{{ booking.roomName }}</a>
+      } @else {
+        {{ deletedRoom }}
+      }
+    </ng-template>
+    <ng-template appDetailValue="location" let-booking>
+      @if (hasLocation(booking)) {
+        <a [routerLink]="['/locations', booking.locationId]">{{ booking.locationName }}</a>
+      } @else {
+        {{ missingLocation(booking) }}
+      }
+    </ng-template>
+    <ng-template appDetailValue="member" let-booking>
+      @if (hasMember(booking)) {
+        <a [routerLink]="['/members', booking.memberId]">{{ booking.memberName }}</a>
+      } @else {
+        {{ deletedMember }}
+      }
+    </ng-template>
+  </app-details-list>
+} @else if (notFound()) {
+  <app-empty-state
+    icon="event"
+    title="Booking not found"
+    message="Check the link and try again."
+    [headingLevel]="1"
+  >
+    <a mat-flat-button routerLink="/bookings">All bookings</a>
+  </app-empty-state>
+} @else if (query.error(); as error) {
+  <app-empty-state
+    icon="error"
+    title="Could not load the booking"
+    [message]="error.message"
+    [headingLevel]="1"
+  >
+    <button mat-stroked-button type="button" (click)="query.refresh()">Try again</button>
+  </app-empty-state>
+} @else {
+  <p role="status">Loading booking…</p>
+}

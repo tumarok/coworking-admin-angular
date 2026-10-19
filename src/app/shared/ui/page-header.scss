@@ -39,3 +39,12 @@ h1 {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+// Something richer than text under the title, such as a status chip.
+.subtitle-content {
+  margin-top: 0.5rem;
+
+  &:empty {
+    display: none;
+  }
+}

@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, provideHttpClient } from '@angular/commo
 import { TestBed } from '@angular/core/testing';
 import type { ApiErrorBody, Booking, LoginResponse, Location, Page } from '@shared/api/contract';
 import { firstValueFrom } from 'rxjs';
-import { findBookedSlot, installMockApi, signIn, TEST_NOW } from './mock-api';
+import { bookableSlot, findBookedSlot, installMockApi, signIn, TEST_NOW } from './mock-api';
 import { apiUrl } from './msw-server';
 
 describe('mock API under HttpClient', () => {
@@ -85,5 +85,34 @@ describe('mock API under HttpClient', () => {
     const request = firstValueFrom(http.get('http://localhost/elsewhere'));
 
     await expect(request).rejects.toBeInstanceOf(HttpErrorResponse);
+  });
+
+  it('takes a booking from bookableSlot: free, inside the opening hours of its location', async () => {
+    const api = installMockApi();
+    signIn();
+    const { input, room, location } = bookableSlot(api);
+
+    const created = await firstValueFrom(
+      http.post<Booking>(apiUrl('/bookings'), input, {
+        headers: { Authorization: 'Bearer demo-token.usr_admin' },
+      }),
+    );
+
+    expect(created).toMatchObject({ roomId: room.id, locationId: location.id, status: 'pending' });
+  });
+
+  it('puts the slot of bookableSlot where it is asked, on the clock of the location', () => {
+    const api = installMockApi();
+
+    const { input, location } = bookableSlot(api, { date: '2027-07-01', start: '09:00' });
+
+    const hour = new Intl.DateTimeFormat('en-GB', {
+      timeZone: location.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(new Date(input.startsAt));
+    expect(hour).toBe('09:00');
+    expect(input.startsAt.slice(0, 10)).toBe('2027-07-01');
   });
 });

@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, viewChild } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
 import userEvent from '@testing-library/user-event';
 import { ListToolbar } from './list-toolbar';
@@ -16,6 +16,7 @@ import { ListToolbar } from './list-toolbar';
   `,
 })
 class Host {
+  readonly toolbar = viewChild.required(ListToolbar);
   readonly active = signal(false);
   cleared = 0;
 }
@@ -52,6 +53,16 @@ describe('ListToolbar', () => {
     await fixture.whenStable();
 
     await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveFocus();
+  });
+
+  it('moves focus to the first control on request, for a control that takes its own place away', async () => {
+    const { fixture } = await render(Host);
+    screen.getByRole('search', { name: 'Filter rooms' }).focus();
+    expect(screen.getByRole('textbox', { name: 'Search' })).not.toHaveFocus();
+
+    fixture.componentInstance.toolbar().focusFirst();
 
     expect(screen.getByRole('textbox', { name: 'Search' })).toHaveFocus();
   });

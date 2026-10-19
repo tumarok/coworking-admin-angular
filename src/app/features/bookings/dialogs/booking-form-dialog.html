@@ -1,0 +1,138 @@
+<form
+  [formRoot]="form"
+  [attr.aria-busy]="form().submitting()"
+  (keydown.enter)="revealErrors($event)"
+>
+  <h2 mat-dialog-title>{{ title }}</h2>
+
+  <mat-dialog-content>
+    <app-form-banner [messages]="banner()" [links]="conflictLinks()" />
+
+    <div class="fields">
+      <app-form-field
+        #room
+        class="wide"
+        label="Room"
+        required
+        [hint]="
+          roomsFailed() ? 'The rooms could not be loaded. Close the form and try again.' : undefined
+        "
+        [errors]="visibleErrors(form.roomId)"
+      >
+        <app-autocomplete-field
+          placeholder="Choose a room"
+          [initialFocus]="true"
+          [inputId]="room.inputId"
+          [describedBy]="room.describedBy()"
+          [options]="roomOptions()"
+          [total]="rooms.value()?.total"
+          [selectedLabel]="roomLabel()"
+          (searchChange)="roomSearch.set($event)"
+          [formField]="form.roomId"
+        />
+      </app-form-field>
+
+      <app-form-field
+        #member
+        class="wide"
+        label="Member"
+        required
+        [hint]="
+          membersFailed()
+            ? 'The members could not be loaded. Close the form and try again.'
+            : undefined
+        "
+        [errors]="visibleErrors(form.memberId)"
+      >
+        <app-autocomplete-field
+          placeholder="Choose a member"
+          [inputId]="member.inputId"
+          [describedBy]="member.describedBy()"
+          [options]="memberOptions()"
+          [total]="members.value()?.total"
+          [selectedLabel]="memberLabel()"
+          (searchChange)="memberSearch.set($event)"
+          [formField]="form.memberId"
+        />
+      </app-form-field>
+
+      <app-form-field
+        #date
+        class="wide"
+        label="Date"
+        required
+        [hint]="dateHint()"
+        [errors]="visibleErrors(form.date)"
+      >
+        <app-date-field
+          pickerLabel="Choose the booking date"
+          [inputId]="date.inputId"
+          [describedBy]="date.describedBy()"
+          [formField]="form.date"
+        />
+      </app-form-field>
+
+      <app-form-field #start label="From" [errors]="visibleErrors(form.startTime)">
+        <app-time-field
+          pickerLabel="Choose the start time"
+          [inputId]="start.inputId"
+          [describedBy]="start.describedBy()"
+          [formField]="form.startTime"
+        />
+      </app-form-field>
+
+      <app-form-field
+        #end
+        label="To"
+        [errors]="visibleErrors(form.endTime, form.startTime, form.date)"
+      >
+        <app-time-field
+          pickerLabel="Choose the end time"
+          [inputId]="end.inputId"
+          [describedBy]="end.describedBy()"
+          [formField]="form.endTime"
+        />
+      </app-form-field>
+
+      <app-form-field
+        #attendees
+        label="Attendees"
+        required
+        [errors]="visibleErrors(form.attendees, form.roomId)"
+      >
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input
+            matInput
+            type="number"
+            inputmode="numeric"
+            step="1"
+            [id]="attendees.inputId"
+            [aria-describedby]="attendees.describedBy()"
+            [formField]="form.attendees"
+          />
+        </mat-form-field>
+      </app-form-field>
+
+      <app-form-field #notes class="wide" label="Notes" [errors]="visibleErrors(form.notes)">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <textarea
+            matInput
+            rows="3"
+            [id]="notes.inputId"
+            [aria-describedby]="notes.describedBy()"
+            [formField]="form.notes"
+          ></textarea>
+        </mat-form-field>
+      </app-form-field>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="undefined" [disabled]="pending()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" [disabled]="!canSave()">
+      {{ pending() ? 'Saving…' : 'Save' }}
+    </button>
+  </mat-dialog-actions>
+</form>

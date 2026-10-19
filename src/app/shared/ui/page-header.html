@@ -10,6 +10,7 @@
     @if (subtitle(); as subtitle) {
       <p class="subtitle">{{ subtitle }}</p>
     }
+    <div class="subtitle-content"><ng-content select="[appPageSubtitle]" /></div>
   </div>
   <div class="actions">
     <ng-content />

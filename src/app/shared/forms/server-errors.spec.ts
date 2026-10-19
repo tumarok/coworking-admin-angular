@@ -55,6 +55,32 @@ describe('server errors on a form', () => {
   });
 
   describe('serverErrors', () => {
+    it('puts a message on the field the form calls the key by, when told so', () => {
+      const errors = serverErrors(f, apiError({ fieldErrors: { title: 'Taken' } }), {
+        title: 'name',
+      });
+
+      expect(errors).toEqual([
+        { kind: SERVER, message: 'Taken', fieldTree: f.name },
+        { kind: SERVER, message: undefined, fieldTree: f },
+      ]);
+    });
+
+    it('leaves a key that is not renamed as it is, and does not mistake an inherited name for a rename', () => {
+      const errors = serverErrors(
+        f,
+        apiError({ fieldErrors: { name: 'Taken', constructor: 'Odd' } }),
+        {
+          title: 'name',
+        },
+      );
+
+      expect(errors).toEqual([
+        { kind: SERVER, message: 'Taken', fieldTree: f.name },
+        { kind: SERVER, message: 'Odd', fieldTree: f },
+      ]);
+    });
+
     it('gives one error per field the server named, carrying its message', () => {
       const errors = serverErrors(
         f,

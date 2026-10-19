@@ -9,7 +9,8 @@ export interface BackLink {
 
 /**
  * The top of a page: an optional link back, the page's one `<h1>`, a subtitle, and the page's
- * actions (projected content, aligned to the end).
+ * actions (projected content, aligned to the end). A subtitle that is more than text, such as a
+ * status chip, is projected with the attribute `appPageSubtitle`.
  */
 @Component({
   selector: 'app-page-header',

@@ -97,3 +97,10 @@ export function formatTimeRange(startIso: string, endIso: string, timeZone = 'UT
     ? `${startDay}, ${startTime}–${endTime}`
     : `${startDay}, ${startTime} – ${endDay}, ${endTime}`;
 }
+
+/** The length of a span in hours, as it is: `1.5` for an hour and a half. `undefined` when an end is not a date. */
+export function durationHours(startIso: string, endIso: string): number | undefined {
+  const start = toDate(startIso);
+  const end = toDate(endIso);
+  return start && end ? (end.getTime() - start.getTime()) / 3_600_000 : undefined;
+}

@@ -50,12 +50,17 @@ export class ListToolbar {
 
   private readonly controls = viewChild.required<ElementRef<HTMLElement>>('controls');
 
-  protected clear(): void {
+  /** Moves focus to the first control (normally the search box). */
+  focusFirst(): void {
     this.controls()
       .nativeElement.querySelector<HTMLElement>(
         'input, select, textarea, button, [role="combobox"]',
       )
       ?.focus();
+  }
+
+  protected clear(): void {
+    this.focusFirst();
     this.clearClick.emit();
   }
 }

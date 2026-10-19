@@ -13,6 +13,17 @@ import { PageHeader } from './page-header';
 })
 class Host {}
 
+@Component({
+  imports: [PageHeader],
+  template: `
+    <app-page-header title="Aurora, 14 Oct 2026">
+      <span appPageSubtitle>Confirmed</span>
+      <button type="button">Edit</button>
+    </app-page-header>
+  `,
+})
+class RichHost {}
+
 describe('PageHeader', () => {
   it('shows the title as the page heading', async () => {
     await render(PageHeader, { inputs: { title: 'Rooms' }, providers: provideTestApp() });
@@ -27,5 +38,14 @@ describe('PageHeader', () => {
     expect(screen.getByText('All rooms')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/lists');
     expect(screen.getByRole('button', { name: 'Add room' })).toBeInTheDocument();
+  });
+
+  it('shows a projected subtitle apart from the actions', async () => {
+    await render(RichHost, { providers: provideTestApp() });
+
+    const status = screen.getByText('Confirmed');
+    expect(status.closest('.subtitle-content')).not.toBeNull();
+    expect(status.closest('.actions')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Edit' }).closest('.actions')).not.toBeNull();
   });
 });

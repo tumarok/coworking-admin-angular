@@ -1,4 +1,5 @@
 import { AMENITIES, type Room, roomInputSchema } from '@shared/api/contract';
+import { numberField } from '@shared/forms/number-schema';
 import { centsToEuros, eurosToCents, formatMoney } from '@shared/util/format';
 import { z } from 'zod';
 import { hasLocation } from '../room-location';
@@ -6,17 +7,6 @@ import { hasLocation } from '../room-location';
 /** The most an hour can cost: the API's limit in cents, as euros and as the message words it. */
 const MAX_RATE_CENTS = 1_000_000;
 const MAX_RATE_EUROS = centsToEuros(MAX_RATE_CENTS);
-
-/**
- * A number field the person may leave empty (a native number input then holds `null`): the empty
- * field gets its own message, and a number goes on to the contract's rule.
- */
-const numberField = <T extends z.ZodType<number, number>>(missing: string, rule: T) =>
-  z
-    .number()
-    .nullable()
-    .pipe(z.number({ error: missing }))
-    .pipe(rule);
 
 /**
  * The room form's schema: the contract's own input schema where the form and the API agree, and

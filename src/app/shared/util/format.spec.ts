@@ -1,5 +1,6 @@
 import {
   centsToEuros,
+  durationHours,
   eurosToCents,
   formatDate,
   formatDateTime,
@@ -103,5 +104,21 @@ describe('formatTimeRange', () => {
     expect(
       formatTimeRange('2026-10-12T20:00:00.000Z', '2026-10-12T22:00:00.000Z', 'Europe/Kyiv'),
     ).toBe('12 Oct 2026, 23:00 – 13 Oct 2026, 01:00');
+  });
+});
+
+describe('durationHours', () => {
+  it('counts hours, with fractions as they are', () => {
+    expect(durationHours('2026-10-12T06:00:00.000Z', '2026-10-12T07:30:00.000Z')).toBe(1.5);
+    expect(durationHours('2026-10-12T06:00:00.000Z', '2026-10-12T14:00:00.000Z')).toBe(8);
+  });
+
+  it('is negative for a span that ends before it starts', () => {
+    expect(durationHours('2026-10-12T07:00:00.000Z', '2026-10-12T06:00:00.000Z')).toBe(-1);
+  });
+
+  it('answers nothing when an end is not a date', () => {
+    expect(durationHours('soon', '2026-10-12T06:00:00.000Z')).toBeUndefined();
+    expect(durationHours('2026-10-12T06:00:00.000Z', '')).toBeUndefined();
   });
 });

@@ -1,0 +1,91 @@
+<app-page-header title="Bookings" subtitle="Who uses which room, and when">
+  <button mat-flat-button type="button" (click)="create()">
+    <app-icon name="add" size="1.125rem" />
+    New booking
+  </button>
+</app-page-header>
+
+<app-list-toolbar
+  label="Filter bookings"
+  [filtersActive]="store.hasActiveFilters()"
+  (clearClick)="store.reset()"
+>
+  <app-search-input
+    label="Search member or room"
+    [value]="store.params().q"
+    (searchChange)="store.setSearch($event)"
+  />
+  <app-date-field
+    ariaLabel="From date"
+    placeholder="From date"
+    pickerLabel="Choose the first day"
+    describedBy="bookings-day-filter-note"
+    [value]="store.params().from ?? ''"
+    [latest]="store.params().to ?? ''"
+    (valueChange)="setFrom($event)"
+  />
+  <app-date-field
+    ariaLabel="To date"
+    placeholder="To date"
+    pickerLabel="Choose the last day"
+    describedBy="bookings-day-filter-note"
+    [value]="store.params().to ?? ''"
+    [earliest]="store.params().from ?? ''"
+    (valueChange)="setTo($event)"
+  />
+  <span id="bookings-day-filter-note" class="visually-hidden">
+    Filters by the day a booking starts, counted in UTC.
+  </span>
+  <app-filter-select
+    label="Status"
+    anyLabel="Any status"
+    [options]="statusOptions"
+    [value]="store.params().status"
+    (valueChange)="store.setFilter('status', $event)"
+  />
+  <app-filter-select
+    label="Location"
+    anyLabel="Any location"
+    [options]="locationOptions()"
+    [value]="store.params().locationId"
+    (valueChange)="store.setFilter('locationId', $event)"
+  />
+  @if (chips().length > 0) {
+    <mat-chip-set role="list" aria-label="Filtering by">
+      @for (chip of chips(); track chip.key) {
+        <mat-chip role="listitem" (removed)="removeChip(chip.key)">
+          {{ chip.label }}
+          <button matChipRemove type="button" [attr.aria-label]="chip.removeLabel">
+            <app-icon name="close" size="1.125rem" />
+          </button>
+        </mat-chip>
+      }
+    </mat-chip-set>
+  }
+</app-list-toolbar>
+
+<app-data-table
+  caption="Bookings"
+  [columns]="columns"
+  [rows]="rows()"
+  [total]="bookings.value()?.total ?? 0"
+  [page]="store.params().page"
+  [limit]="store.params().limit"
+  [fetching]="bookings.isFetching()"
+  [error]="bookings.error()?.message"
+  [emptyMessage]="emptyMessage()"
+  (pageChange)="store.paginate($event)"
+  (retry)="bookings.refresh()"
+>
+  <ng-template appCell="room" let-row>
+    @if (hasRoom(row)) {
+      <a [routerLink]="['/rooms', row.roomId]">{{ row.roomName }}</a>
+      @if (hasLocation(row)) {
+        <span class="muted">{{ row.locationName }}</span>
+      }
+    } @else {
+      {{ deletedRoom }}
+    }
+  </ng-template>
+  <ng-template appCell="status" let-row><app-status-chip [status]="row.status" /></ng-template>
+</app-data-table>

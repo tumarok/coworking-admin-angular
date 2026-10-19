@@ -37,15 +37,22 @@ export function fieldAt(form: FieldTree<unknown>, path: string): FieldTree<unkno
  *
  * The errors on the form itself are about the attempt, not about the values, so a retry may pass:
  * {@link hasBlockingErrors} leaves them out when deciding whether to send again.
+ *
+ * `rename` maps a key of the request body to the form's own field when they differ (the API's
+ * `startsAt` is the form's `startTime`).
  */
 export function serverErrors<T>(
   form: FieldTree<T>,
   error: ApiError,
+  rename: Readonly<Record<string, string>> = {},
 ): ValidationError.WithFieldTree[] {
   const errors = Object.entries(error.fieldErrors).map(([key, message]) => ({
     kind: SERVER_ERROR_KIND,
     message,
-    fieldTree: (key === WHOLE_FORM_KEY ? undefined : fieldAt(form, key)) ?? form,
+    fieldTree:
+      (key === WHOLE_FORM_KEY
+        ? undefined
+        : fieldAt(form, Object.hasOwn(rename, key) ? rename[key] : key)) ?? form,
   }));
   if (errors.length === 0) {
     return [{ kind: SERVER_ERROR_KIND, message: error.message, fieldTree: form }];

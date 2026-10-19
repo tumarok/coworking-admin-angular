@@ -1,3 +1,5 @@
+import type { BookingInput } from '@shared/api/contract';
+import { zonedToUtcIso } from '@shared/util/timezone';
 import { createApi } from '@server/core/api';
 import { withinOpeningHours } from '@server/core/rules';
 import { createMswHandlers } from '@server/msw';
@@ -34,4 +36,34 @@ export function findBookedSlot(api: ReturnType<typeof installMockApi>) {
     if (member) return { existing, room, location, member };
   }
   throw new Error('seed has no suitable booking');
+}
+
+/**
+ * A room that can be booked, with its location and an active member, and the input of a booking of
+ * that room: an hour on the clock of its location, on a day far enough ahead that nothing is
+ * booked then. `date` and the two times are given on that clock.
+ */
+export function bookableSlot(
+  api: ReturnType<typeof installMockApi>,
+  { date = '2027-03-02', start = '10:00', end = '11:00' } = {},
+) {
+  const { db } = api;
+  for (const room of db.rooms) {
+    const location = db.locations.find((l) => l.id === room.locationId);
+    if (room.status !== 'available' || location?.status !== 'active' || room.capacity < 2) continue;
+    const startsAt = zonedToUtcIso(date, start, location.timezone);
+    const endsAt = zonedToUtcIso(date, end, location.timezone);
+    const member = db.members.find((m) => m.status === 'active');
+    if (!startsAt || !endsAt || !member) continue;
+    const input: BookingInput = {
+      roomId: room.id,
+      memberId: member.id,
+      startsAt,
+      endsAt,
+      attendees: 2,
+      notes: null,
+    };
+    return { room, location, member, input };
+  }
+  throw new Error('seed has no bookable room');
 }
