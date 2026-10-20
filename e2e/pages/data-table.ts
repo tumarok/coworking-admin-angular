@@ -33,10 +33,14 @@ export class DataTable {
     return this.row(rowText).getByRole('checkbox');
   }
 
-  /** Says there is nothing to list: the only row is the page's own words for it ("No rooms match…"). */
+  /**
+   * Says there is nothing to list: the only row is the page's own words for it ("No rooms match…").
+   * It waits for those words first: a table that is still loading, or still shows the rows of the
+   * search before, has one row or many, and either is only a step on the way.
+   */
   async expectEmpty(): Promise<void> {
+    await expect(this.rows.filter({ hasText: /^\s*(No |Nothing )/ })).toHaveCount(1);
     await expect(this.rows).toHaveCount(1);
-    await expect(this.rows).toHaveText(/^\s*(No |Nothing )/);
   }
 
   async expectRows(count: number): Promise<void> {

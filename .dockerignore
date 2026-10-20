@@ -1,0 +1,20 @@
+# Version control and CI
+.git
+.github
+
+# Dependencies and build output: the images install and build their own
+node_modules
+dist
+.angular
+coverage
+playwright-report
+test-results
+
+# Not needed by either image
+e2e
+.vscode
+.idea
+*.md
+*.log
+.env.local
+.env.*.local
