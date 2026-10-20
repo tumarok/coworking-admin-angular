@@ -1,6 +1,25 @@
 {
   "name": "coworking-admin-angular",
   "version": "0.1.0",
+  "description": "Admin console for coworking spaces: Angular 22 (zoneless, signals) over a REST API with an in-repo mock backend.",
+  "keywords": [
+    "angular",
+    "signals",
+    "zoneless",
+    "angular-material",
+    "ngrx-signals",
+    "zod",
+    "playwright",
+    "admin-dashboard"
+  ],
+  "homepage": "https://github.com/tumarok/coworking-admin-angular#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tumarok/coworking-admin-angular.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tumarok/coworking-admin-angular/issues"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
