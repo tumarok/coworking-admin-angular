@@ -19,6 +19,7 @@ const elements = [
   { type: 'feature', pattern: 'src/app/features/*', capture: ['feature'] },
   { type: 'testing', pattern: 'src/testing' },
   { type: 'server', pattern: 'server' },
+  { type: 'e2e', pattern: 'e2e' },
 ];
 
 /** Allowed imports per layer. Everything not listed here is rejected (`default: 'disallow'`). */
@@ -65,6 +66,12 @@ const policies = [
     },
   },
   {
+    // The end-to-end suite drives the built app from outside: it imports nothing of it, only itself
+    // and the test libraries.
+    from: { element: { type: 'e2e' } },
+    allow: { to: { element: { type: 'e2e' } } },
+  },
+  {
     // Test helpers are for specs only: no other policy lets a layer reach `src/testing`.
     from: { file: { categories: 'spec' } },
     allow: { to: { element: { type: 'testing' } } },
@@ -72,7 +79,7 @@ const policies = [
 ];
 
 export default defineConfig(
-  globalIgnores(['dist/', 'coverage/', '.angular/']),
+  globalIgnores(['dist/', 'coverage/', '.angular/', 'playwright-report/', 'test-results/']),
   {
     files: ['**/*.ts'],
     extends: [
@@ -110,7 +117,7 @@ export default defineConfig(
     extends: [angular.configs.templateRecommended, angular.configs.templateAccessibility],
   },
   {
-    files: ['src/**/*.ts', 'server/**/*.ts'],
+    files: ['src/**/*.ts', 'server/**/*.ts', 'e2e/**/*.ts'],
     plugins: { boundaries },
     settings: {
       'import/resolver': { typescript: { project: './tsconfig.json' } },
